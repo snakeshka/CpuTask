@@ -25,6 +25,10 @@ add_executable(UnitTests
     Core/CodecTests.cpp
     Core/InstructionTests.cpp
     Core/RegisterTests.cpp
+
+    Emulator/EmulatorTests.cpp
+    Emulator/ExecutorTests.cpp
+    Emulator/CpuStateTests.cpp
 )
 
 target_include_directories(UnitTests
@@ -36,6 +40,7 @@ target_link_libraries(UnitTests
   PRIVATE
     gtest_main
     Core
+    EmulatorInternal
 )
 
 set_target_properties(UnitTests PROPERTIES

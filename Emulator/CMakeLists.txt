@@ -1,4 +1,16 @@
-﻿file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+﻿#создаем internal object для тестов
+add_library(EmulatorInternal OBJECT
+    src/CpuState.cpp
+    src/Executor.cpp
+    src/Emulator.cpp
+)
+
+target_include_directories(EmulatorInternal PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+target_link_libraries(EmulatorInternal PUBLIC Core)
+
+
+file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 
 add_executable(Emulator
