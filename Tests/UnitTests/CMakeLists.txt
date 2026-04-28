@@ -26,6 +26,11 @@ add_executable(UnitTests
     Core/InstructionTests.cpp
     Core/RegisterTests.cpp
 
+    Assembler/LexerTests.cpp
+    Assembler/ParserTests.cpp
+    Assembler/AssemblerTests.cpp
+    Assembler/SemanticAnalyzerTests.cpp
+
     Emulator/EmulatorTests.cpp
     Emulator/ExecutorTests.cpp
     Emulator/CpuStateTests.cpp
@@ -40,6 +45,7 @@ target_link_libraries(UnitTests
   PRIVATE
     gtest_main
     Core
+    AssemblerInternal
     EmulatorInternal
 )
 
