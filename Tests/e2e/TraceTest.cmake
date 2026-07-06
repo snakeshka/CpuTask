@@ -12,13 +12,13 @@ file(REMOVE_RECURSE "${WORK_DIR}")
 file(MAKE_DIRECTORY "${WORK_DIR}")
 set(SOURCE_FILE "${WORK_DIR}/program.s")
 set(OBJECT_FILE "${WORK_DIR}/program.o")
-# Простая тестовая программа
+# РџСЂРѕСЃС‚Р°СЏ С‚РµСЃС‚РѕРІР°СЏ РїСЂРѕРіСЂР°РјРјР°
 file(WRITE "${SOURCE_FILE}"
 "LI R0 0x1
 LI R1 0x8000
 ADD R1 R1 R0
 ")
-# Ассемблируем файл
+# РђСЃСЃРµРјР±Р»РёСЂСѓРµРј С„Р°Р№Р»
 execute_process(
     COMMAND "${ASSEMBLER}" "${SOURCE_FILE}" "${OBJECT_FILE}"
     RESULT_VARIABLE ASSEMBLER_RESULT
@@ -36,7 +36,7 @@ endif()
 if(NOT EXISTS "${OBJECT_FILE}")
     message(FATAL_ERROR "Assembler did not create output file: ${OBJECT_FILE}")
 endif()
-# Запускаем эмулятор с флагом трассировки --trace=disasm
+# Р—Р°РїСѓСЃРєР°РµРј СЌРјСѓР»СЏС‚РѕСЂ СЃ С„Р»Р°РіРѕРј С‚СЂР°СЃСЃРёСЂРѕРІРєРё --trace=disasm
 execute_process(
     COMMAND "${EMULATOR}" "${OBJECT_FILE}" "--trace=disasm"
     RESULT_VARIABLE EMULATOR_RESULT
@@ -51,9 +51,9 @@ if(NOT EMULATOR_RESULT EQUAL 0)
         "stderr:\n${EMULATOR_STDERR}\n"
     )
 endif()
-# Нормализуем концы строк (для совместимости Windows/Linux)
+# РќРѕСЂРјР°Р»РёР·СѓРµРј РєРѕРЅС†С‹ СЃС‚СЂРѕРє (РґР»СЏ СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚Рё Windows/Linux)
 string(REPLACE "\r\n" "\n" EMULATOR_STDOUT "${EMULATOR_STDOUT}")
-# Ожидаемый вывод (трассировка + итоговые регистры)
+# РћР¶РёРґР°РµРјС‹Р№ РІС‹РІРѕРґ (С‚СЂР°СЃСЃРёСЂРѕРІРєР° + РёС‚РѕРіРѕРІС‹Рµ СЂРµРіРёСЃС‚СЂС‹)
 set(EXPECTED_OUTPUT
 "---- 1 0x0 ----
 0x00010000 LI R0 (0x1) imm (0x1)

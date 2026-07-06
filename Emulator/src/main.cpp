@@ -3,8 +3,77 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <algorithm>
+#include <charconv>
 #include <iterator>
 #include <optional>
+
+std::vector<Emulator::TickInterval> parseTraceTicks(std::string_view value)
+{
+	std::vector<Emulator::TickInterval> rawIntervals;
+
+	std::size_t start = 0;
+	while (start < value.size())
+	{
+		std::size_t comma = value.find(',', start);
+		std::string_view part = value.substr(start, comma - start);
+
+		std::size_t dash = part.find('-');
+		if (dash == std::string_view::npos)
+		{
+			// Одиночный такт
+			unsigned int tick = 0;
+			auto res = std::from_chars(part.data(), part.data() + part.size(), tick);
+			if (res.ec == std::errc{})
+			{
+				rawIntervals.push_back({tick, tick});
+			}
+		}
+		else
+		{
+			// Диапазон тактов
+			std::string_view startPart = part.substr(0, dash);
+			std::string_view endPart = part.substr(dash + 1);
+
+			unsigned int start_tick = 0;
+			unsigned int end_tick = 0;
+
+			auto res1 = std::from_chars(startPart.data(), startPart.data() + startPart.size(), start_tick);
+			auto res2 = std::from_chars(endPart.data(), endPart.data() + endPart.size(), end_tick);
+
+			if (res1.ec == std::errc{} && res2.ec == std::errc{})
+			{
+				rawIntervals.push_back({start_tick, end_tick});
+			}
+		}
+
+		if (comma == std::string_view::npos)
+			break;
+		start = comma + 1;
+	}
+	if (rawIntervals.empty())
+		return {};
+	// Сортируем интервалы по началу диапазона
+	std::sort(rawIntervals.begin(), rawIntervals.end(), [](const Emulator::TickInterval &a, const Emulator::TickInterval &b)
+			  { return a.begin < b.begin; });
+	// Сливаем перекрывающиеся интервалы
+	std::vector<Emulator::TickInterval> mergedIntervals;
+	mergedIntervals.push_back(rawIntervals[0]);
+	for (std::size_t i = 1; i < rawIntervals.size(); ++i)
+	{
+		auto &last = mergedIntervals.back();
+		const auto &current = rawIntervals[i];
+		if (current.begin <= last.end)
+		{
+			last.end = std::max(last.end, current.end); // Склеиваем
+		}
+		else
+		{
+			mergedIntervals.push_back(current);
+		}
+	}
+	return mergedIntervals;
+}
 
 namespace
 {
@@ -27,6 +96,7 @@ int main(int argc, char *argv[])
 {
 	std::string programPath;
 	bool traceEnabled = false;
+	std::vector<Emulator::TickInterval> traceIntervals;
 
 	for (int i = 1; i < argc; ++i)
 	{
@@ -34,6 +104,11 @@ int main(int argc, char *argv[])
 		if (arg == "--trace=disasm")
 		{
 			traceEnabled = true;
+		}
+		else if (arg.starts_with("--trace-ticks="))
+		{
+			traceEnabled = true;
+			traceIntervals = parseTraceTicks(arg.substr(14));
 		}
 		else
 		{
@@ -53,7 +128,7 @@ int main(int argc, char *argv[])
 	}
 
 	Emulator::Emulator emulator;
-	const auto result = emulator.Run(*bytecode, traceEnabled);
+	const auto result = emulator.Run(*bytecode, traceEnabled, traceIntervals);
 	if (!result.Success)
 	{
 		std::cerr << "error: " << result.Error << '\n';

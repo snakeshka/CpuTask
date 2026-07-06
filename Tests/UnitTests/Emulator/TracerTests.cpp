@@ -9,7 +9,7 @@
 
 namespace
 {
-// Вспомогательный класс для перехвата stdout во время теста (RAII паттерн)
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ stdout пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ (RAII пїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
 class RedirectStdout
 {
 public:
@@ -35,58 +35,58 @@ private:
 
 }
 
-// Тестируем корректность трассировки операции сложения (ADD)
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (ADD)
 TEST(TracerTests, TracesAddInstructionCorrectly)
 {
 	RedirectStdout redirect;
 
 	Emulator::CpuState state;
-	state.SetRegister(2, 0xbeef0000); // R2 (первый источник)
-	state.SetRegister(3, 0x0000beef); // R3 (второй источник)
+	state.SetRegister(2, 0xbeef0000); // R2 (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
+	state.SetRegister(3, 0x0000beef); // R3 (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
 
-	// Инструкция: ADD R1 R2 R3
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: ADD R1 R2 R3
 	// Opcode = 0x02, a = 1, b = 2, c = 3
 	Cpu::Isa::Instruction instr{Cpu::Isa::Opcode::ADD, 1, 2, 3};
 
-	Emulator::Tracer tracer(true); // Трассировка включена
+	Emulator::Tracer tracer(true); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
-	// 1. Сохраняем состояние ДО выполнения
+	// 1. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	tracer.SaveStateBefore(state, instr);
 
-	// 2. Симулируем изменение состояния (выполнение)
-	state.SetRegister(1, 0xbeefbeef); // R1 (приемник) получает новое значение
+	// 2. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
+	state.SetRegister(1, 0xbeefbeef); // R1 (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ) пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
-	// 3. Выводим шаг трассировки
+	// 3. пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	tracer.TraceStep(state, instr);
 
 	std::string output = redirect.GetOutput();
 
 #if TRACING
-	// Если сборка с включенным TRACING, проверяем точное совпадение с эталоном
+	// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ TRACING, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	std::string expected =
 		"---- 1 0x0 ----\n"
 		"0x03020102 ADD R1 (0xbeefbeef) R2 (0xbeef0000) R3 (0xbeef)\n";
 	EXPECT_EQ(output, expected);
 #else
-	// Если трассировка отключена на этапе компиляции, вывода быть не должно
+	// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 	EXPECT_TRUE(output.empty());
 #endif
 }
 
-// Тестируем корректность трассировки операции загрузки константы (LI)
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (LI)
 TEST(TracerTests, TracesLiInstructionCorrectly)
 {
 	RedirectStdout redirect;
 
 	Emulator::CpuState state;
-	// Инструкция: LI R3 0xbeef
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: LI R3 0xbeef
 	// Opcode = 0x00, a = 3, b = 0xef, c = 0xbe
 	Cpu::Isa::Instruction instr{Cpu::Isa::Opcode::LI, 3, 0xef, 0xbe};
 
 	Emulator::Tracer tracer(true);
 
 	tracer.SaveStateBefore(state, instr);
-	state.SetRegister(3, 0x0000beef); // Новое значение в R3
+	state.SetRegister(3, 0x0000beef); // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ R3
 	tracer.TraceStep(state, instr);
 
 	std::string output = redirect.GetOutput();
@@ -101,7 +101,7 @@ TEST(TracerTests, TracesLiInstructionCorrectly)
 #endif
 }
 
-// Тестируем отключение вывода, если флаг --trace=disasm не был передан
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ --trace=disasm пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 TEST(TracerTests, DoesNotTraceIfDisabledAtRuntime)
 {
 	RedirectStdout redirect;
@@ -109,11 +109,47 @@ TEST(TracerTests, DoesNotTraceIfDisabledAtRuntime)
 	Emulator::CpuState state;
 	Cpu::Isa::Instruction instr{Cpu::Isa::Opcode::ADD, 1, 2, 3};
 
-	Emulator::Tracer tracer(false); // Выключено на этапе выполнения
+	Emulator::Tracer tracer(false); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
 	tracer.SaveStateBefore(state, instr);
 	tracer.TraceStep(state, instr);
 
 	std::string output = redirect.GetOutput();
 	EXPECT_TRUE(output.empty());
+}
+
+TEST(TracerTests, FiltersOutTicksOutsideInterval)
+{
+	RedirectStdout redirect;
+	Emulator::CpuState state;
+	// пїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ 1, 2 пїЅ 5
+	std::vector<Emulator::TickInterval> intervals = {{1, 2}, {5, 5}};
+	Emulator::Tracer tracer(true, intervals);
+	Cpu::Isa::Instruction instr{Cpu::Isa::Opcode::ADD, 1, 2, 3};
+	// пїЅпїЅпїЅпїЅ 1 (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
+	tracer.SaveStateBefore(state, instr);
+	tracer.TraceStep(state, instr);
+	// пїЅпїЅпїЅпїЅ 2 (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
+	tracer.SaveStateBefore(state, instr);
+	tracer.TraceStep(state, instr);
+	// пїЅпїЅпїЅпїЅ 3 (пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
+	tracer.SaveStateBefore(state, instr);
+	tracer.TraceStep(state, instr);
+	// пїЅпїЅпїЅпїЅ 4 (пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
+	tracer.SaveStateBefore(state, instr);
+	tracer.TraceStep(state, instr);
+	// пїЅпїЅпїЅпїЅ 5 (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
+	tracer.SaveStateBefore(state, instr);
+	tracer.TraceStep(state, instr);
+	std::string output = redirect.GetOutput();
+#if TRACING
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ 1, 2 пїЅ 5 пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 3 пїЅ 4
+	EXPECT_TRUE(output.find("---- 1 ") != std::string::npos);
+	EXPECT_TRUE(output.find("---- 2 ") != std::string::npos);
+	EXPECT_FALSE(output.find("---- 3 ") != std::string::npos);
+	EXPECT_FALSE(output.find("---- 4 ") != std::string::npos);
+	EXPECT_TRUE(output.find("---- 5 ") != std::string::npos);
+#else
+	EXPECT_TRUE(output.empty());
+#endif
 }

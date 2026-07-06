@@ -9,7 +9,7 @@
 
 namespace Emulator
 {
-EmulatorResult Emulator::Run(const Cpu::Bytecode &bytecode, bool traceEnabled) const
+EmulatorResult Emulator::Run(const Cpu::Bytecode &bytecode, bool traceEnabled, std::vector<TickInterval> traceIntervals) const
 {
 	const auto instructions = Cpu::Isa::decodeProgram(bytecode);
 	if (!instructions.has_value())
@@ -19,7 +19,7 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode &bytecode, bool traceEnabled) c
 
 	CpuState state;
 	Executor executor;
-	Tracer tracer(traceEnabled);
+	Tracer tracer(traceEnabled, std::move(traceIntervals));
 	for (const auto &instruction : *instructions)
 	{
 		tracer.SaveStateBefore(state, instruction);

@@ -1,4 +1,4 @@
-#e2e тест
+#e2e С‚РµСЃС‚
 add_test(
     NAME E2EFullFlow
     COMMAND ${CMAKE_COMMAND}

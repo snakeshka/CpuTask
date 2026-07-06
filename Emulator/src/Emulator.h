@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CpuState.h"
+#include "Tracer.h"
 #include "Cpu/Common/Types.h"
 
 #include <string>
@@ -17,7 +18,7 @@ struct EmulatorResult
 class Emulator
 {
 public:
-	EmulatorResult Run(const Cpu::Bytecode &bytecode, bool traceEnabled = false) const;
+	EmulatorResult Run(const Cpu::Bytecode &bytecode, bool traceEnabled = false, std::vector<TickInterval> traceIntervals = {}) const;
 };
 
 }

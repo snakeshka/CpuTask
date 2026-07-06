@@ -44,7 +44,7 @@ TEST(ExecutorTests, AddWrapsOnOverflow)
 TEST(ExecutorTests, ExecutesLuiInstructionAndPreservesLowerBytes)
 {
 	Emulator::CpuState state;
-	state.SetRegister(1, 0xDEADC0DE); // Младшие байты C0DE должны сохраниться
+	state.SetRegister(1, 0xDEADC0DE); // РњР»Р°РґС€РёРµ Р±Р°Р№С‚С‹ C0DE РґРѕР»Р¶РЅС‹ СЃРѕС…СЂР°РЅРёС‚СЊСЃСЏ
 	const Emulator::Executor executor;
 
 	// LUI R1 0x1234
@@ -82,14 +82,14 @@ TEST(ExecutorTests, ExecutesSllInstructionWithMasking)
 TEST(ExecutorTests, ExecutesSraInstructionPreservesSign)
 {
 	Emulator::CpuState state;
-	state.SetRegister(1, 0xF0000000); // Отрицательное число
+	state.SetRegister(1, 0xF0000000); // РћС‚СЂРёС†Р°С‚РµР»СЊРЅРѕРµ С‡РёСЃР»Рѕ
 	state.SetRegister(2, 4);
 	const Emulator::Executor executor;
 
 	// SRA R3 R1 R2
 	executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SRA, 3, 1, 2});
 
-	EXPECT_EQ(state.GetRegister(3), 0xFF000000u); // Знак сохранился
+	EXPECT_EQ(state.GetRegister(3), 0xFF000000u); // Р—РЅР°Рє СЃРѕС…СЂР°РЅРёР»СЃСЏ
 }
 
 TEST(ExecutorTests, ExecutesSdivInstructionSigned)
@@ -105,31 +105,31 @@ TEST(ExecutorTests, ExecutesSdivInstructionSigned)
 	EXPECT_EQ(state.GetRegister(3), 5u); // -5 / -1 = 5
 }
 
-// Проверяем, что беззнаковое деление на ноль возвращает правильный статус
+// РџСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ Р±РµР·Р·РЅР°РєРѕРІРѕРµ РґРµР»РµРЅРёРµ РЅР° РЅРѕР»СЊ РІРѕР·РІСЂР°С‰Р°РµС‚ РїСЂР°РІРёР»СЊРЅС‹Р№ СЃС‚Р°С‚СѓСЃ
 TEST(ExecutorTests, UdivReturnsDivisionByZeroStatus)
 {
 	Emulator::CpuState state;
 	state.SetRegister(1, 10);
-	state.SetRegister(2, 0); // Делитель = 0
+	state.SetRegister(2, 0); // Р”РµР»РёС‚РµР»СЊ = 0
 	const Emulator::Executor executor;
-	// Выполняем UDIV R3 R1 R2
+	// Р’С‹РїРѕР»РЅСЏРµРј UDIV R3 R1 R2
 	auto status = executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::UDIV, 3, 1, 2});
 
 	EXPECT_EQ(status, Emulator::ExecutionStatus::DivisionByZero);
 }
-// Проверяем, что знаковое деление на ноль возвращает правильный статус
+// РџСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ Р·РЅР°РєРѕРІРѕРµ РґРµР»РµРЅРёРµ РЅР° РЅРѕР»СЊ РІРѕР·РІСЂР°С‰Р°РµС‚ РїСЂР°РІРёР»СЊРЅС‹Р№ СЃС‚Р°С‚СѓСЃ
 TEST(ExecutorTests, SdivReturnsDivisionByZeroStatus)
 {
 	Emulator::CpuState state;
 	state.SetRegister(1, 0xFFFFFFFB); // -5
-	state.SetRegister(2, 0);		  // Делитель = 0
+	state.SetRegister(2, 0);		  // Р”РµР»РёС‚РµР»СЊ = 0
 	const Emulator::Executor executor;
-	// Выполняем SDIV R3 R1 R2
+	// Р’С‹РїРѕР»РЅСЏРµРј SDIV R3 R1 R2
 	auto status = executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SDIV, 3, 1, 2});
 
 	EXPECT_EQ(status, Emulator::ExecutionStatus::DivisionByZero);
 }
-// Тест на корректность строкового представления статусов (ToString)
+// РўРµСЃС‚ РЅР° РєРѕСЂСЂРµРєС‚РЅРѕСЃС‚СЊ СЃС‚СЂРѕРєРѕРІРѕРіРѕ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ СЃС‚Р°С‚СѓСЃРѕРІ (ToString)
 TEST(ExecutorTests, StatusToStringReturnsCorrectDescriptions)
 {
 	EXPECT_EQ(Emulator::ToString(Emulator::ExecutionStatus::Success), "Success");
@@ -141,11 +141,11 @@ TEST(ExecutorTests, ExecutesSraInstructionWithZeroShift)
 {
 	Emulator::CpuState state;
 	state.SetRegister(1, 0xF0000000);
-	state.SetRegister(2, 0); // сдвиг на 0 бит
+	state.SetRegister(2, 0); // СЃРґРІРёРі РЅР° 0 Р±РёС‚
 	const Emulator::Executor executor;
 
 	// SRA R3 R1 R2
 	executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SRA, 3, 1, 2});
 
-	EXPECT_EQ(state.GetRegister(3), 0xF0000000u); // Число не должно измениться
+	EXPECT_EQ(state.GetRegister(3), 0xF0000000u); // Р§РёСЃР»Рѕ РЅРµ РґРѕР»Р¶РЅРѕ РёР·РјРµРЅРёС‚СЊСЃСЏ
 }

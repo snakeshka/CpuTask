@@ -13,11 +13,19 @@
 
 namespace Emulator
 {
+
+struct TickInterval
+{
+	std::uint32_t begin;
+	std::uint32_t end;
+};
+
 class Tracer
 {
 public:
-	explicit Tracer(bool enabled)
+	explicit Tracer(bool enabled, std::vector<TickInterval> intervals = {})
 		: m_Enabled(enabled)
+		, m_Intervals(std::move(intervals))
 	{
 	}
 
@@ -26,19 +34,20 @@ public:
 #if TRACING
 		if (!m_Enabled)
 			return;
+		if (!IsTickAllowed(m_Tick))
+			return;
+
 		m_Addr = state.ProgramCounter();
 		m_ValB = 0;
 		m_ValC = 0;
-		// Сверяемся с форматом команды, чтобы знать, где регистры, а где константы
+		
 		auto formatOpt = Cpu::Isa::findInstructionByOpcode(instruction.opcode);
 		if (formatOpt.has_value())
 		{
-			// Если есть 2-й операнд и это регистр, считываем его
 			if (formatOpt->operands.size() > 1 && formatOpt->operands[1] == Cpu::Isa::OperandKind::Register)
 			{
 				m_ValB = state.GetRegister(instruction.b);
 			}
-			// Если есть 3-й операнд и это регистр, считываем его
 			if (formatOpt->operands.size() > 2 && formatOpt->operands[2] == Cpu::Isa::OperandKind::Register)
 			{
 				m_ValC = state.GetRegister(instruction.c);
@@ -52,7 +61,10 @@ public:
 #if TRACING
 		if (!m_Enabled)
 			return;
-		PrintTraceLine(state, instruction);
+		if (IsTickAllowed(m_Tick))
+		{
+			PrintTraceLine(state, instruction);
+		}
 		m_Tick++;
 #endif
 	}
@@ -64,6 +76,20 @@ private:
 	uint32_t m_Addr = 0;
 	uint32_t m_ValB = 0;
 	uint32_t m_ValC = 0;
+	std::vector<TickInterval> m_Intervals;
+
+	inline bool IsTickAllowed(uint32_t tick) const
+	{
+		if (m_Intervals.empty())
+			return true;
+		auto it = std::lower_bound(m_Intervals.begin(), m_Intervals.end(), tick, [](const TickInterval &interval, uint32_t val)
+								   { return interval.end < val; });
+		if (it != m_Intervals.end() && tick >= it->begin)
+		{
+			return true;
+		}
+		return false;
+	}
 
 	void PrintTraceLine(const CpuState &state, const Cpu::Isa::Instruction &instruction);
 #endif
