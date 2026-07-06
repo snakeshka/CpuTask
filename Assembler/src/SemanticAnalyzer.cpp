@@ -16,6 +16,8 @@ std::string operandKindName(Cpu::Isa::OperandKind kind)
         return "register";
     case Cpu::Isa::OperandKind::Immediate16:
         return "16-bit immediate";
+	case Cpu::Isa::OperandKind::UpperImmediate16:
+		return "16-bit upper immediate";
     }
 
     return "operand";
@@ -101,7 +103,8 @@ std::vector<Cpu::Isa::Instruction> SemanticAnalyzer::Analyze(
                 } else if (index == 2) {
                     instruction.c = *reg;
                 }
-            } else if (expected == Cpu::Isa::OperandKind::Immediate16) {
+            } else if ( expected == Cpu::Isa::OperandKind::Immediate16 ||
+						expected == Cpu::Isa::OperandKind::UpperImmediate16) {
                 if (operand.Kind != ParsedOperandKind::Number) {
                     diagnostics.Add(Diagnostic{
                         DiagnosticSeverity::Error,

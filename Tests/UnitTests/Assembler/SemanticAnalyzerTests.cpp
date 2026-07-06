@@ -82,7 +82,7 @@ TEST(SemanticAnalyzerTests, BuildsAddInstruction)
 
 TEST(SemanticAnalyzerTests, ReportsUnknownInstruction)
 {
-	const auto result = analyzeSource("MUL R1 R2 R3\n");
+	const auto result = analyzeSource("ABC R1 R2 R3\n");
 
 	EXPECT_TRUE(Tests::HasDiagnosticCode(result.diagnostics, Assembler::DiagnosticCode::UnknownInstruction));
 }

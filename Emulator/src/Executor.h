@@ -21,7 +21,18 @@ private:
 
 	static void ExecuteIllegal(CpuState &state, const Cpu::Isa::Instruction &instruction);
 	static void ExecuteLi(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static void ExecuteLui(CpuState &state, const Cpu::Isa::Instruction &instruction);
 	static void ExecuteAdd(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static void ExecuteSub(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static void ExecuteAnd(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static void ExecuteOr(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static void ExecuteXor(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static void ExecuteSll(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static void ExecuteSrl(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static void ExecuteSra(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static void ExecuteMul(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static void ExecuteUdiv(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static void ExecuteSdiv(CpuState &state, const Cpu::Isa::Instruction &instruction);
 };
 
 }

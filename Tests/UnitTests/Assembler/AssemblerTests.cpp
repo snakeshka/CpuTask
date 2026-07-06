@@ -83,7 +83,7 @@ TEST(AssemblerTests, ReportsUnknownInstruction)
 {
 	Assembler::Assembler assembler;
 
-	const auto result = assembler.Assemble("MUL R1 R2 R3\n");
+	const auto result = assembler.Assemble("ABC R1 R2 R3\n");
 
 	EXPECT_FALSE(result.Success());
 	EXPECT_TRUE(hasCode(result, Assembler::DiagnosticCode::UnknownInstruction));
