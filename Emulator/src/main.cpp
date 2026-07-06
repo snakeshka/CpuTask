@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	for (std::size_t index = 0; index < 16; ++index)
+	for (size_t index = 0; index < 16; ++index)
 	{
 		std::cout << 'R' << index << "=0x"
 				  << std::hex << std::uppercase << std::setw(8) << std::setfill('0')

@@ -8,7 +8,7 @@
 
 namespace Cpu::Isa
 {
-using RegisterIndex = std::uint8_t;
+using RegisterIndex = uint8_t;
 
 constexpr RegisterIndex RegisterCount = 16;
 

@@ -15,7 +15,7 @@ public:
         DiagnosticBag& diagnostics) const;
 
 private:
-    static bool parseImmediate16(const ParsedOperand& operand, std::uint16_t& value, DiagnosticBag& diagnostics);
+    static bool parseImmediate16(const ParsedOperand& operand, uint16_t& value, DiagnosticBag& diagnostics);
 };
 
 }

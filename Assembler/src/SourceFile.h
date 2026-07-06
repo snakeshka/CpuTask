@@ -13,7 +13,7 @@ public:
 
     const std::string& Path() const;
     std::string_view Text() const;
-    std::string_view GetLine(std::size_t line) const;
+    std::string_view GetLine(size_t line) const;
 
     static std::optional<SourceFile> readFromDisk(const std::string& path);
 

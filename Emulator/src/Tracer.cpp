@@ -14,14 +14,14 @@ void Tracer::PrintTraceLine(const CpuState &state, const Cpu::Isa::Instruction &
 
 	std::cout << "---- " << std::dec << m_Tick << " 0x" << std::hex << m_Addr << " ----\n";
 
-	std::uint32_t encoding = static_cast<std::uint8_t>(instruction.opcode) |
-		(static_cast<std::uint32_t>(instruction.a) << 8) |
-		(static_cast<std::uint32_t>(instruction.b) << 16) |
-		(static_cast<std::uint32_t>(instruction.c) << 24);
+	uint32_t encoding = static_cast<uint8_t>(instruction.opcode) |
+		(static_cast<uint32_t>(instruction.a) << 8) |
+		(static_cast<uint32_t>(instruction.b) << 16) |
+		(static_cast<uint32_t>(instruction.c) << 24);
 
 	std::cout << "0x" << std::setfill('0') << std::setw(8) << std::hex << encoding << " " << formatOpt->mnemonic;
 
-	for (std::size_t i = 0; i < formatOpt->operands.size(); ++i)
+	for (size_t i = 0; i < formatOpt->operands.size(); ++i)
 	{
 		auto kind = formatOpt->operands[i];
 		if (kind == Cpu::Isa::OperandKind::Register)

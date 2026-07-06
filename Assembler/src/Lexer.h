@@ -16,7 +16,7 @@ public:
 
 private:
     std::string_view m_Source;
-    std::size_t m_Position = 0;
+    size_t m_Position = 0;
     SourceLocation m_Location{};
 
     bool IsAtEnd() const;

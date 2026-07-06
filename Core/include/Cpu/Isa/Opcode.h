@@ -4,7 +4,7 @@
 
 namespace Cpu::Isa {
 
-enum class Opcode : std::uint8_t {
+enum class Opcode : uint8_t {
 	LI = 0x00,
 	LUI = 0x01,
 	ADD = 0x02,

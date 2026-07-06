@@ -18,10 +18,10 @@ std::string DiagnosticFormatter::format(const SourceFile& sourceFile, const Diag
 
         const auto startColumn = diagnostic.Range.Begin.Column;
         const auto endColumn = std::max(diagnostic.Range.End.Column, startColumn + 1);
-        for (std::size_t column = 1; column < startColumn; ++column) {
+        for (size_t column = 1; column < startColumn; ++column) {
             output << ' ';
         }
-        for (std::size_t column = startColumn; column < endColumn; ++column) {
+        for (size_t column = startColumn; column < endColumn; ++column) {
             output << '^';
         }
         output << '\n';

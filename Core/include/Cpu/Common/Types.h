@@ -8,9 +8,9 @@
 namespace Cpu
 {
 
-using Byte = std::uint8_t;
-using Word = std::uint16_t;
-using DWord = std::uint32_t;
+using Byte = uint8_t;
+using Word = uint16_t;
+using DWord = uint32_t;
 
 using Bytecode = std::vector<Byte>;
 

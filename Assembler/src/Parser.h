@@ -17,7 +17,7 @@ public:
 
 private:
     std::span<const Token> m_Tokens;
-    std::size_t m_Position = 0;
+    size_t m_Position = 0;
 
     const Token& Current() const;
     const Token& Advance();

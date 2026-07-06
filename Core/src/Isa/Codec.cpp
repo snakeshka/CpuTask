@@ -49,7 +49,7 @@ std::optional<std::vector<Instruction>> decodeProgram(const Bytecode &bytecode)
 	std::vector<Instruction> instructions;
 	instructions.reserve(bytecode.size() / 4);
 
-	for (std::size_t offset = 0; offset < bytecode.size(); offset += 4)
+	for (size_t offset = 0; offset < bytecode.size(); offset += 4)
 	{
 		const InstructionBytes bytes = {
 			bytecode[offset],

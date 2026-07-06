@@ -22,7 +22,7 @@ std::string_view SourceFile::Text() const
     return m_Text;
 }
 
-std::string_view SourceFile::GetLine(std::size_t line) const
+std::string_view SourceFile::GetLine(size_t line) const
 {
     if (line == 0 || line > m_Lines.size()) {
         return {};
@@ -47,10 +47,10 @@ void SourceFile::BuildLineIndex()
 {
     m_Lines.clear();
 
-    std::size_t lineStart = 0;
-    for (std::size_t index = 0; index < m_Text.size(); ++index) {
+    size_t lineStart = 0;
+    for (size_t index = 0; index < m_Text.size(); ++index) {
         if (m_Text[index] == '\n') {
-            std::size_t lineEnd = index;
+            size_t lineEnd = index;
             if (lineEnd > lineStart && m_Text[lineEnd - 1] == '\r') {
                 --lineEnd;
             }
@@ -60,7 +60,7 @@ void SourceFile::BuildLineIndex()
     }
 
     if (lineStart <= m_Text.size()) {
-        std::size_t lineEnd = m_Text.size();
+        size_t lineEnd = m_Text.size();
         if (lineEnd > lineStart && m_Text[lineEnd - 1] == '\r') {
             --lineEnd;
         }

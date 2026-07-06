@@ -28,8 +28,8 @@ enum class DiagnosticCode {
 };
 
 struct SourceLocation {
-    std::size_t Line = 1;
-    std::size_t Column = 1;
+    size_t Line = 1;
+    size_t Column = 1;
 };
 
 struct SourceRange {

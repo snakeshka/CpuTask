@@ -9,24 +9,24 @@ namespace Emulator
 Executor::Executor()
 {
 	m_Handlers.fill(&Executor::ExecuteIllegal);
-	m_Handlers[static_cast<std::uint8_t>(Cpu::Isa::Opcode::LI)] = &Executor::ExecuteLi;
-	m_Handlers[static_cast<std::uint8_t>(Cpu::Isa::Opcode::LUI)] = &Executor::ExecuteLui;
-	m_Handlers[static_cast<std::uint8_t>(Cpu::Isa::Opcode::ADD)] = &Executor::ExecuteAdd;
-	m_Handlers[static_cast<std::uint8_t>(Cpu::Isa::Opcode::SUB)] = &Executor::ExecuteSub;
-	m_Handlers[static_cast<std::uint8_t>(Cpu::Isa::Opcode::AND)] = &Executor::ExecuteAnd;
-	m_Handlers[static_cast<std::uint8_t>(Cpu::Isa::Opcode::OR)] = &Executor::ExecuteOr;
-	m_Handlers[static_cast<std::uint8_t>(Cpu::Isa::Opcode::XOR)] = &Executor::ExecuteXor;
-	m_Handlers[static_cast<std::uint8_t>(Cpu::Isa::Opcode::SLL)] = &Executor::ExecuteSll;
-	m_Handlers[static_cast<std::uint8_t>(Cpu::Isa::Opcode::SRL)] = &Executor::ExecuteSrl;
-	m_Handlers[static_cast<std::uint8_t>(Cpu::Isa::Opcode::SRA)] = &Executor::ExecuteSra;
-	m_Handlers[static_cast<std::uint8_t>(Cpu::Isa::Opcode::MUL)] = &Executor::ExecuteMul;
-	m_Handlers[static_cast<std::uint8_t>(Cpu::Isa::Opcode::UDIV)] = &Executor::ExecuteUdiv;
-	m_Handlers[static_cast<std::uint8_t>(Cpu::Isa::Opcode::SDIV)] = &Executor::ExecuteSdiv;
+	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::LI)] = &Executor::ExecuteLi;
+	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::LUI)] = &Executor::ExecuteLui;
+	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::ADD)] = &Executor::ExecuteAdd;
+	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::SUB)] = &Executor::ExecuteSub;
+	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::AND)] = &Executor::ExecuteAnd;
+	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::OR)] = &Executor::ExecuteOr;
+	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::XOR)] = &Executor::ExecuteXor;
+	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::SLL)] = &Executor::ExecuteSll;
+	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::SRL)] = &Executor::ExecuteSrl;
+	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::SRA)] = &Executor::ExecuteSra;
+	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::MUL)] = &Executor::ExecuteMul;
+	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::UDIV)] = &Executor::ExecuteUdiv;
+	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::SDIV)] = &Executor::ExecuteSdiv;
 }
 
 ExecutionStatus Executor::Execute(CpuState &state, const Cpu::Isa::Instruction &instruction) const
 {
-	const auto opcode = static_cast<std::uint8_t>(instruction.opcode);
+	const auto opcode = static_cast<uint8_t>(instruction.opcode);
 	auto status = m_Handlers[opcode](state, instruction);
 
 	if (status == ExecutionStatus::Success)
@@ -52,7 +52,7 @@ ExecutionStatus Executor::ExecuteLi(CpuState &state, const Cpu::Isa::Instruction
 
 ExecutionStatus Executor::ExecuteLui(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
-	state.SetRegister(instruction.a, (state.GetRegister(instruction.a) & 0x0000FFFF) | (static_cast<std::uint32_t>(instruction.immediate16()) << 16));
+	state.SetRegister(instruction.a, (state.GetRegister(instruction.a) & 0x0000FFFF) | (static_cast<uint32_t>(instruction.immediate16()) << 16));
 	return ExecutionStatus::Success;
 }
 
@@ -138,13 +138,13 @@ ExecutionStatus Executor::ExecuteUdiv(CpuState &state, const Cpu::Isa::Instructi
 
 ExecutionStatus Executor::ExecuteSdiv(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
-	std::int32_t valB = static_cast<std::int32_t>(state.GetRegister(instruction.b));
-	std::int32_t valC = static_cast<std::int32_t>(state.GetRegister(instruction.c));
+	int32_t valB = static_cast<int32_t>(state.GetRegister(instruction.b));
+	int32_t valC = static_cast<int32_t>(state.GetRegister(instruction.c));
 	if (valC == 0)
 	{
 		return ExecutionStatus::DivisionByZero;
 	}
-	state.SetRegister(instruction.a, static_cast<std::uint32_t>(valB / valC));
+	state.SetRegister(instruction.a, static_cast<uint32_t>(valB / valC));
 	return ExecutionStatus::Success;
 }
 

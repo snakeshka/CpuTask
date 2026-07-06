@@ -60,10 +60,10 @@ public:
 private:
 	bool m_Enabled = false;
 #if TRACING
-	std::uint32_t m_Tick = 1;
-	std::uint32_t m_Addr = 0;
-	std::uint32_t m_ValB = 0;
-	std::uint32_t m_ValC = 0;
+	uint32_t m_Tick = 1;
+	uint32_t m_Addr = 0;
+	uint32_t m_ValB = 0;
+	uint32_t m_ValC = 0;
 
 	void PrintTraceLine(const CpuState &state, const Cpu::Isa::Instruction &instruction);
 #endif

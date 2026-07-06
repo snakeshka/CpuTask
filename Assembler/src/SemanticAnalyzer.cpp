@@ -68,7 +68,7 @@ std::vector<Cpu::Isa::Instruction> SemanticAnalyzer::Analyze(
         instruction.opcode = format->opcode;
         bool ok = true;
 
-        for (std::size_t index = 0; index < format->operands.size(); ++index) {
+        for (size_t index = 0; index < format->operands.size(); ++index) {
             const auto expected = format->operands[index];
             const auto& operand = parsed.Operands[index];
 
@@ -116,14 +116,14 @@ std::vector<Cpu::Isa::Instruction> SemanticAnalyzer::Analyze(
                     continue;
                 }
 
-                std::uint16_t immediate = 0;
+                uint16_t immediate = 0;
                 if (!parseImmediate16(operand, immediate, diagnostics)) {
                     ok = false;
                     continue;
                 }
 
-                instruction.b = static_cast<std::uint8_t>(immediate & 0x00FF);
-                instruction.c = static_cast<std::uint8_t>((immediate >> 8) & 0x00FF);
+                instruction.b = static_cast<uint8_t>(immediate & 0x00FF);
+                instruction.c = static_cast<uint8_t>((immediate >> 8) & 0x00FF);
             }
         }
 
@@ -135,7 +135,7 @@ std::vector<Cpu::Isa::Instruction> SemanticAnalyzer::Analyze(
     return instructions;
 }
 
-bool SemanticAnalyzer::parseImmediate16(const ParsedOperand& operand, std::uint16_t& value, DiagnosticBag& diagnostics)
+bool SemanticAnalyzer::parseImmediate16(const ParsedOperand& operand, uint16_t& value, DiagnosticBag& diagnostics)
 {
     unsigned long parsed = 0;
     int base = 10;
@@ -169,7 +169,7 @@ bool SemanticAnalyzer::parseImmediate16(const ParsedOperand& operand, std::uint1
         return false;
     }
 
-    value = static_cast<std::uint16_t>(parsed);
+    value = static_cast<uint16_t>(parsed);
     return true;
 }
 

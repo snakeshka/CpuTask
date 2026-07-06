@@ -2,22 +2,22 @@
 
 namespace Emulator
 {
-std::uint32_t CpuState::GetRegister(std::size_t index) const
+uint32_t CpuState::GetRegister(size_t index) const
 {
 	return m_Registers[index];
 }
 
-void CpuState::SetRegister(std::size_t index, std::uint32_t value)
+void CpuState::SetRegister(size_t index, uint32_t value)
 {
 	m_Registers[index] = value;
 }
 
-std::uint32_t CpuState::ProgramCounter() const
+uint32_t CpuState::ProgramCounter() const
 {
 	return m_Pc;
 }
 
-void CpuState::SetProgramCounter(std::uint32_t pc)
+void CpuState::SetProgramCounter(uint32_t pc)
 {
 	m_Pc = pc;
 }
