@@ -24,65 +24,81 @@ Executor::Executor()
 	m_Handlers[static_cast<std::uint8_t>(Cpu::Isa::Opcode::SDIV)] = &Executor::ExecuteSdiv;
 }
 
-void Executor::Execute(CpuState &state, const Cpu::Isa::Instruction &instruction) const
+ExecutionStatus Executor::Execute(CpuState &state, const Cpu::Isa::Instruction &instruction) const
 {
 	const auto opcode = static_cast<std::uint8_t>(instruction.opcode);
-	m_Handlers[opcode](state, instruction);
-	state.AdvanceProgramCounter();
+	auto status = m_Handlers[opcode](state, instruction);
+
+	if (status == ExecutionStatus::Success)
+	{
+		state.AdvanceProgramCounter();
+	}
+
+	return status;
 }
 
-void Executor::ExecuteIllegal(CpuState &state, const Cpu::Isa::Instruction &instruction)
+ExecutionStatus Executor::ExecuteIllegal(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
 	(void)state;
 	(void)instruction;
+	return ExecutionStatus::IllegalInstruction;
 }
 
-void Executor::ExecuteLi(CpuState &state, const Cpu::Isa::Instruction &instruction)
+ExecutionStatus Executor::ExecuteLi(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
 	state.SetRegister(instruction.a, instruction.immediate16());
+	return ExecutionStatus::Success;
 }
 
-void Executor::ExecuteLui(CpuState &state, const Cpu::Isa::Instruction &instruction)
+ExecutionStatus Executor::ExecuteLui(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
 	state.SetRegister(instruction.a, (state.GetRegister(instruction.a) & 0x0000FFFF) | (static_cast<std::uint32_t>(instruction.immediate16()) << 16));
+	return ExecutionStatus::Success;
 }
 
-void Executor::ExecuteAdd(CpuState &state, const Cpu::Isa::Instruction &instruction)
+ExecutionStatus Executor::ExecuteAdd(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) + state.GetRegister(instruction.c));
+	return ExecutionStatus::Success;
 }
 
-void Executor::ExecuteSub(CpuState &state, const Cpu::Isa::Instruction &instruction)
+ExecutionStatus Executor::ExecuteSub(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) - state.GetRegister(instruction.c));
+	return ExecutionStatus::Success;
 }
 
-void Executor::ExecuteAnd(CpuState &state, const Cpu::Isa::Instruction &instruction)
+ExecutionStatus Executor::ExecuteAnd(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) & state.GetRegister(instruction.c));
+	return ExecutionStatus::Success;
 }
 
-void Executor::ExecuteOr(CpuState &state, const Cpu::Isa::Instruction &instruction)
+ExecutionStatus Executor::ExecuteOr(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) | state.GetRegister(instruction.c));
+	return ExecutionStatus::Success;
 }
 
-void Executor::ExecuteXor(CpuState &state, const Cpu::Isa::Instruction &instruction)
+ExecutionStatus Executor::ExecuteXor(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) ^ state.GetRegister(instruction.c));
+	return ExecutionStatus::Success;
 }
 
-void Executor::ExecuteSll(CpuState &state, const Cpu::Isa::Instruction &instruction)
+ExecutionStatus Executor::ExecuteSll(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) << (state.GetRegister(instruction.c) & 0x1F));
+	return ExecutionStatus::Success;
 }
 
-void Executor::ExecuteSrl(CpuState &state, const Cpu::Isa::Instruction &instruction)
+ExecutionStatus Executor::ExecuteSrl(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) >> (state.GetRegister(instruction.c) & 0x1F));
+	return ExecutionStatus::Success;
 }
 
-void Executor::ExecuteSra(CpuState &state, const Cpu::Isa::Instruction &instruction)
+ExecutionStatus Executor::ExecuteSra(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
 	//state.SetRegister(instruction.a, static_cast<int32_t>(state.GetRegister(instruction.b)) >> (state.GetRegister(instruction.c) & 0x1F));
 
@@ -92,7 +108,7 @@ void Executor::ExecuteSra(CpuState &state, const Cpu::Isa::Instruction &instruct
 	if (shift == 0)
 	{
 		state.SetRegister(instruction.a, value);
-		return;
+		return ExecutionStatus::Success;
 	}
 
 	uint32_t signBit = (value >> 31) & 1;
@@ -100,32 +116,36 @@ void Executor::ExecuteSra(CpuState &state, const Cpu::Isa::Instruction &instruct
 	uint32_t result = (value >> shift) | fillMask;
 
 	state.SetRegister(instruction.a, result);
+	return ExecutionStatus::Success;
 }
 
-void Executor::ExecuteMul(CpuState &state, const Cpu::Isa::Instruction &instruction)
+ExecutionStatus Executor::ExecuteMul(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) * state.GetRegister(instruction.c));
+	return ExecutionStatus::Success;
 }
 
-void Executor::ExecuteUdiv(CpuState &state, const Cpu::Isa::Instruction &instruction)
+ExecutionStatus Executor::ExecuteUdiv(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
 	uint32_t divisor = state.GetRegister(instruction.c);
 	if (divisor == 0)
 	{
-		throw std::runtime_error("division by zero in UDIV");
+		return ExecutionStatus::DivisionByZero;
 	}
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) / divisor);
+	return ExecutionStatus::Success;
 }
 
-void Executor::ExecuteSdiv(CpuState &state, const Cpu::Isa::Instruction &instruction)
+ExecutionStatus Executor::ExecuteSdiv(CpuState &state, const Cpu::Isa::Instruction &instruction)
 {
 	std::int32_t valB = static_cast<std::int32_t>(state.GetRegister(instruction.b));
 	std::int32_t valC = static_cast<std::int32_t>(state.GetRegister(instruction.c));
 	if (valC == 0)
 	{
-		throw std::runtime_error("division by zero in SDIV");
+		return ExecutionStatus::DivisionByZero;
 	}
 	state.SetRegister(instruction.a, static_cast<std::uint32_t>(valB / valC));
+	return ExecutionStatus::Success;
 }
 
 }

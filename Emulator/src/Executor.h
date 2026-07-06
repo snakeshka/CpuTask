@@ -5,6 +5,8 @@
 
 #include <array>
 
+#include "Status.h"
+
 namespace Emulator
 {
 class Executor
@@ -12,27 +14,27 @@ class Executor
 public:
 	Executor();
 
-	void Execute(CpuState &state, const Cpu::Isa::Instruction &instruction) const;
+	ExecutionStatus Execute(CpuState &state, const Cpu::Isa::Instruction &instruction) const;
 
 private:
-	using Handler = void (*)(CpuState &, const Cpu::Isa::Instruction &);
+	using Handler = ExecutionStatus (*)(CpuState &, const Cpu::Isa::Instruction &);
 
 	std::array<Handler, 256> m_Handlers{};
 
-	static void ExecuteIllegal(CpuState &state, const Cpu::Isa::Instruction &instruction);
-	static void ExecuteLi(CpuState &state, const Cpu::Isa::Instruction &instruction);
-	static void ExecuteLui(CpuState &state, const Cpu::Isa::Instruction &instruction);
-	static void ExecuteAdd(CpuState &state, const Cpu::Isa::Instruction &instruction);
-	static void ExecuteSub(CpuState &state, const Cpu::Isa::Instruction &instruction);
-	static void ExecuteAnd(CpuState &state, const Cpu::Isa::Instruction &instruction);
-	static void ExecuteOr(CpuState &state, const Cpu::Isa::Instruction &instruction);
-	static void ExecuteXor(CpuState &state, const Cpu::Isa::Instruction &instruction);
-	static void ExecuteSll(CpuState &state, const Cpu::Isa::Instruction &instruction);
-	static void ExecuteSrl(CpuState &state, const Cpu::Isa::Instruction &instruction);
-	static void ExecuteSra(CpuState &state, const Cpu::Isa::Instruction &instruction);
-	static void ExecuteMul(CpuState &state, const Cpu::Isa::Instruction &instruction);
-	static void ExecuteUdiv(CpuState &state, const Cpu::Isa::Instruction &instruction);
-	static void ExecuteSdiv(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static ExecutionStatus ExecuteIllegal(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static ExecutionStatus ExecuteLi(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static ExecutionStatus ExecuteLui(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static ExecutionStatus ExecuteAdd(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static ExecutionStatus ExecuteSub(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static ExecutionStatus ExecuteAnd(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static ExecutionStatus ExecuteOr(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static ExecutionStatus ExecuteXor(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static ExecutionStatus ExecuteSll(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static ExecutionStatus ExecuteSrl(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static ExecutionStatus ExecuteSra(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static ExecutionStatus ExecuteMul(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static ExecutionStatus ExecuteUdiv(CpuState &state, const Cpu::Isa::Instruction &instruction);
+	static ExecutionStatus ExecuteSdiv(CpuState &state, const Cpu::Isa::Instruction &instruction);
 };
 
 }

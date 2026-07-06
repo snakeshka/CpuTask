@@ -105,17 +105,36 @@ TEST(ExecutorTests, ExecutesSdivInstructionSigned)
 	EXPECT_EQ(state.GetRegister(3), 5u); // -5 / -1 = 5
 }
 
-TEST(ExecutorTests, UdivThrowsOnDivisionByZero)
+// Проверяем, что беззнаковое деление на ноль возвращает правильный статус
+TEST(ExecutorTests, UdivReturnsDivisionByZeroStatus)
 {
 	Emulator::CpuState state;
 	state.SetRegister(1, 10);
-	state.SetRegister(2, 0); // Делитель равен нулю
+	state.SetRegister(2, 0); // Делитель = 0
 	const Emulator::Executor executor;
+	// Выполняем UDIV R3 R1 R2
+	auto status = executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::UDIV, 3, 1, 2});
 
-	// UDIV R3 R1 R2
-	EXPECT_THROW(
-		executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::UDIV, 3, 1, 2}),
-		std::runtime_error);
+	EXPECT_EQ(status, Emulator::ExecutionStatus::DivisionByZero);
+}
+// Проверяем, что знаковое деление на ноль возвращает правильный статус
+TEST(ExecutorTests, SdivReturnsDivisionByZeroStatus)
+{
+	Emulator::CpuState state;
+	state.SetRegister(1, 0xFFFFFFFB); // -5
+	state.SetRegister(2, 0);		  // Делитель = 0
+	const Emulator::Executor executor;
+	// Выполняем SDIV R3 R1 R2
+	auto status = executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SDIV, 3, 1, 2});
+
+	EXPECT_EQ(status, Emulator::ExecutionStatus::DivisionByZero);
+}
+// Тест на корректность строкового представления статусов (ToString)
+TEST(ExecutorTests, StatusToStringReturnsCorrectDescriptions)
+{
+	EXPECT_EQ(Emulator::ToString(Emulator::ExecutionStatus::Success), "Success");
+	EXPECT_EQ(Emulator::ToString(Emulator::ExecutionStatus::DivisionByZero), "division by zero");
+	EXPECT_EQ(Emulator::ToString(Emulator::ExecutionStatus::IllegalInstruction), "illegal instruction");
 }
 
 TEST(ExecutorTests, ExecutesSraInstructionWithZeroShift)

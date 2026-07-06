@@ -1,5 +1,8 @@
 ﻿#include "Emulator.h"
 
+#include <iostream>
+#include <sstream>
+
 #include "Executor.h"
 #include "Tracer.h"
 #include "Cpu/Isa/Codec.h"
@@ -17,20 +20,23 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode &bytecode, bool traceEnabled) c
 	CpuState state;
 	Executor executor;
 	Tracer tracer(traceEnabled);
-	try
+	for (const auto &instruction : *instructions)
 	{
-		for (const auto &instruction : *instructions)
+		tracer.SaveStateBefore(state, instruction);
+
+		auto status = executor.Execute(state, instruction);
+		if (status != ExecutionStatus::Success)
 		{
-			tracer.SaveStateBefore(state, instruction);
-
-			executor.Execute(state, instruction);
-
-			tracer.TraceStep(state, instruction);
+			auto formatOpt = Cpu::Isa::findInstructionByOpcode(instruction.opcode);
+			std::string mnemonic = formatOpt.has_value() ? std::string(formatOpt->mnemonic) : "UNKNOWN";
+			std::ostringstream errorMsg;
+			errorMsg << ToString(status)
+					 << " in " << mnemonic
+					 << " at address 0x" << std::hex << state.ProgramCounter();
+			return EmulatorResult{state, false, errorMsg.str()};
 		}
-	}
-	catch (const std::exception &e)
-	{
-		return EmulatorResult{state, false, e.what()};
+
+		tracer.TraceStep(state, instruction);
 	}
 	return EmulatorResult{state, true, ""};
 }
