@@ -7,7 +7,6 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(googletest)
 
-# �������������� ���������� ���������� bin � lib ����� �� �������� ����� :D
 foreach(t IN ITEMS gtest gtest_main gmock gmock_main)
   if(TARGET ${t})
     set_target_properties(${t} PROPERTIES
@@ -34,6 +33,7 @@ add_executable(UnitTests
     Emulator/EmulatorTests.cpp
     Emulator/ExecutorTests.cpp
     Emulator/CpuStateTests.cpp
+    Emulator/TracerTests.cpp
 )
 
 target_include_directories(UnitTests

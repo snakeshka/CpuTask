@@ -24,7 +24,14 @@
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "linux_x64" ],
-      "wslPath": "${defaultWSLPath}"
+      "wslPath": "${defaultWSLPath}",
+      "variables": [
+        {
+          "name": "TRACING",
+          "value": "true",
+          "type": "BOOL"
+        }
+      ]
     },
     {
       "name": "x64-Release",
@@ -45,7 +52,14 @@
       "installRoot": "${projectDir}\\out\\install\\${name}",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "",
-      "inheritEnvironments": [ "msvc_x64_x64" ]
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "variables": [
+        {
+          "name": "TRACING",
+          "value": "true",
+          "type": "BOOL"
+        }
+      ]
     }
   ]
 }

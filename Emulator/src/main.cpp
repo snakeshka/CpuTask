@@ -25,21 +25,35 @@ std::optional<Cpu::Bytecode> readBytecode(const std::string &path)
 
 int main(int argc, char *argv[])
 {
-	if (argc != 2)
+	std::string programPath;
+	bool traceEnabled = false;
+
+	for (int i = 1; i < argc; ++i)
 	{
-		std::cerr << "usage: Emulator program.o\n";
+		std::string_view arg = argv[i];
+		if (arg == "--trace=disasm")
+		{
+			traceEnabled = true;
+		}
+		else
+		{
+			programPath = arg;
+		}
+	}
+	if (programPath.empty())
+	{
+		std::cerr << "usage: Emulator program.o [--trace=disasm]\n";
 		return 1;
 	}
-
-	const auto bytecode = readBytecode(argv[1]);
+	const auto bytecode = readBytecode(programPath);
 	if (!bytecode.has_value())
 	{
-		std::cerr << argv[1] << ": error: cannot open input file\n";
+		std::cerr << programPath << ": error: cannot open input file\n";
 		return 1;
 	}
 
 	Emulator::Emulator emulator;
-	const auto result = emulator.Run(*bytecode);
+	const auto result = emulator.Run(*bytecode, traceEnabled);
 	if (!result.Success)
 	{
 		std::cerr << "error: " << result.Error << '\n';

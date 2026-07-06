@@ -17,7 +17,7 @@ struct EmulatorResult
 class Emulator
 {
 public:
-	EmulatorResult Run(const Cpu::Bytecode &bytecode) const;
+	EmulatorResult Run(const Cpu::Bytecode &bytecode, bool traceEnabled = false) const;
 };
 
 }

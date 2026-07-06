@@ -1,11 +1,12 @@
 ﻿#include "Emulator.h"
 
 #include "Executor.h"
+#include "Tracer.h"
 #include "Cpu/Isa/Codec.h"
 
 namespace Emulator
 {
-EmulatorResult Emulator::Run(const Cpu::Bytecode &bytecode) const
+EmulatorResult Emulator::Run(const Cpu::Bytecode &bytecode, bool traceEnabled) const
 {
 	const auto instructions = Cpu::Isa::decodeProgram(bytecode);
 	if (!instructions.has_value())
@@ -15,11 +16,22 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode &bytecode) const
 
 	CpuState state;
 	Executor executor;
-	for (const auto &instruction : *instructions)
+	Tracer tracer(traceEnabled);
+	try
 	{
-		executor.Execute(state, instruction);
-	}
+		for (const auto &instruction : *instructions)
+		{
+			tracer.SaveStateBefore(state, instruction);
 
+			executor.Execute(state, instruction);
+
+			tracer.TraceStep(state, instruction);
+		}
+	}
+	catch (const std::exception &e)
+	{
+		return EmulatorResult{state, false, e.what()};
+	}
 	return EmulatorResult{state, true, ""};
 }
 

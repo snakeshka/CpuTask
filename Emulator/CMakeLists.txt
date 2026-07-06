@@ -3,6 +3,7 @@ add_library(EmulatorInternal OBJECT
     src/CpuState.cpp
     src/Executor.cpp
     src/Emulator.cpp
+    src/Tracer.cpp
 )
 
 target_include_directories(EmulatorInternal PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
