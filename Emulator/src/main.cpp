@@ -113,14 +113,14 @@ std::vector<Emulator::AddrInterval> parseAddrIntervals(std::string_view value)
 				startPart.remove_prefix(2);
 				startBase = 16;
 			}
-			int end_base = 10;
+			int endBase = 10;
 			if (endPart.starts_with("0x") || endPart.starts_with("0X"))
 			{
 				endPart.remove_prefix(2);
-				end_base = 16;
+				endBase = 16;
 			}
 			auto res1 = std::from_chars(startPart.data(), startPart.data() + startPart.size(), startAddr, startBase);
-			auto res2 = std::from_chars(endPart.data(), endPart.data() + endPart.size(), endAddr, end_base);
+			auto res2 = std::from_chars(endPart.data(), endPart.data() + endPart.size(), endAddr, endBase);
 			if (res1.ec == std::errc{} && res2.ec == std::errc{})
 			{
 				rawIntervals.push_back({startAddr, endAddr});
@@ -185,10 +185,10 @@ int main(int argc, char *argv[])
 		std::string_view arg = argv[i];
 		if (arg.starts_with("--ram-size="))
 		{
-			std::string_view size_str = arg.substr(11);
-			uint32_t parsed_size = 0;
-			std::from_chars(size_str.data(), size_str.data() + size_str.size(), parsed_size);
-			ramSize = parsed_size;
+			std::string_view sizeStr = arg.substr(11);
+			uint32_t parsedSize = 0;
+			std::from_chars(sizeStr.data(), sizeStr.data() + sizeStr.size(), parsedSize);
+			ramSize = parsedSize;
 		}
 		else if (arg == "--warn=uninit-ram")
 		{

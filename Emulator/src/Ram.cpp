@@ -20,7 +20,10 @@ Ram::Ram(uint32_t maxSize, bool warnUninit)
 
 void Ram::CheckBounds(uint32_t address) const
 {
-	CPU_ASSERT(address < m_MaxSize, "Unchecked memory access out of bounds!");
+	if (address >= m_MaxSize)
+	{
+		throw std::out_of_range("Internal error: unchecked RAM access at address 0x" + std::to_string(address));
+	}
 }
 
 bool Ram::IsValidRange(std::uint64_t address, uint32_t size) const
@@ -30,12 +33,12 @@ bool Ram::IsValidRange(std::uint64_t address, uint32_t size) const
 
 Ram::Page &Ram::GetOrCreatePage(uint32_t pageIndex)
 {
-	auto &page_ptr = m_Pages[pageIndex];
-	if (!page_ptr)
+	auto &pagePtr = m_Pages[pageIndex];
+	if (!pagePtr)
 	{
-		page_ptr = std::make_unique<Page>();
+		pagePtr = std::make_unique<Page>();
 	}
-	return *page_ptr;
+	return *pagePtr;
 }
 
 void Ram::WriteByteInternal(uint32_t address, uint8_t value)
@@ -114,8 +117,8 @@ void Ram::WriteByte(uint32_t address, uint8_t value, uint32_t tick)
 
 	WriteByteInternal(address, value);
 
-	uint32_t new_val = ReadWord(cellAddr, tick);
-	LogTrace(cellAddr, oldVal, new_val, tick);
+	uint32_t newVal = ReadWord(cellAddr, tick);
+	LogTrace(cellAddr, oldVal, newVal, tick);
 }
 
 void Ram::WriteHalfword(uint32_t address, uint16_t value, uint32_t tick)

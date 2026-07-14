@@ -239,18 +239,18 @@ ExecutionStatus Executor::ExecuteStw(CpuState &state, Ram &ram, const Cpu::Isa::
 ExecutionStatus Executor::ExecuteSxt(CpuState &state, Ram &ram, const Cpu::Isa::Instruction &instruction, uint32_t tick)
 {
 	uint32_t val = state.GetRegister(instruction.b);
-	uint32_t imm = instruction.immediate16();
+	uint32_t imm = instruction.c;
 	uint32_t res = val;
 	if (imm == 0)
 	{
-		uint32_t sign_bit = (val >> 7) & 1;
-		uint32_t mask = (0 - sign_bit) << 8; // 0xFFFFFF00 если знаковый бит равен 1, иначе 0x00000000
+		uint32_t signBit = (val >> 7) & 1;
+		uint32_t mask = (0 - signBit) << 8; // 0xFFFFFF00 если знаковый бит равен 1, иначе 0x00000000
 		res = (val & 0xFF) | mask;
 	}
 	else if (imm == 1)
 	{
-		uint32_t sign_bit = (val >> 15) & 1;
-		uint32_t mask = (0 - sign_bit) << 16;
+		uint32_t signBit = (val >> 15) & 1;
+		uint32_t mask = (0 - signBit) << 16;
 		res = (val & 0xFFFF) | mask;
 	}
 
@@ -261,7 +261,7 @@ ExecutionStatus Executor::ExecuteSxt(CpuState &state, Ram &ram, const Cpu::Isa::
 ExecutionStatus Executor::ExecuteBswap(CpuState &state, Ram &ram, const Cpu::Isa::Instruction &instruction, uint32_t tick)
 {
 	uint32_t val = state.GetRegister(instruction.b);
-	uint32_t imm = instruction.immediate16();
+	uint32_t imm = instruction.c;
 	uint32_t res = val;
 	if (imm == 1)
 	{

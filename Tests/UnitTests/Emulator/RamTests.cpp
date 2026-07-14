@@ -79,7 +79,7 @@ TEST(RamTests, SparseMemoryAllocatesOnDemand)
 // 6. Проверка генерации предупреждений о чтении неинициализированных данных
 TEST(RamTests, WarnsOnUninitializedRead)
 {
-	Emulator::Ram ram(1024, true); // warn_uninit = true
+	Emulator::Ram ram(1024, true);
 
 	RedirectStderr redirect;
 	ram.ReadByte(256, 42); // Читаем адрес 0x100 на такте 42
