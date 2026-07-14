@@ -86,7 +86,47 @@ constexpr std::array<OperandKind, 3> SdivOperands = {
 	OperandKind::Register,
 };
 
-constexpr std::array<InstructionFormat, 13> Instructions = {
+constexpr std::array<OperandKind, 2> LdbOperands = {
+	OperandKind::Register,
+	OperandKind::Immediate16,
+};
+
+constexpr std::array<OperandKind, 2> LdhOperands = {
+	OperandKind::Register,
+	OperandKind::Immediate16,
+};
+
+constexpr std::array<OperandKind, 2> LdwOperands = {
+	OperandKind::Register,
+	OperandKind::Immediate16,
+};
+
+constexpr std::array<OperandKind, 2> StbOperands = {
+	OperandKind::Register,
+	OperandKind::Immediate16,
+};
+
+constexpr std::array<OperandKind, 2> SthOperands = {
+	OperandKind::Register,
+	OperandKind::Immediate16,
+};
+
+constexpr std::array<OperandKind, 2> StwOperands = {
+	OperandKind::Register,
+	OperandKind::Immediate16,
+};
+
+constexpr std::array<OperandKind, 2> SxtOperands = {
+	OperandKind::Register,
+	OperandKind::Immediate16,
+};
+
+constexpr std::array<OperandKind, 2> BswapOperands = {
+	OperandKind::Register,
+	OperandKind::Immediate16,
+};
+
+constexpr std::array<InstructionFormat, 21> Instructions = {
 	InstructionFormat{"LI", Opcode::LI, LiOperands},
 	InstructionFormat{"LUI", Opcode::LUI, LuiOperands},
 	InstructionFormat{"ADD", Opcode::ADD, AddOperands},
@@ -99,8 +139,15 @@ constexpr std::array<InstructionFormat, 13> Instructions = {
 	InstructionFormat{"SRA", Opcode::SRA, SraOperands},
 	InstructionFormat{"MUL", Opcode::MUL, MulOperands},
 	InstructionFormat{"UDIV", Opcode::UDIV, UdivOperands},
-	InstructionFormat{"SDIV", Opcode::SDIV, SdivOperands}
-};
+	InstructionFormat{"SDIV", Opcode::SDIV, SdivOperands},
+	InstructionFormat{"LDB", Opcode::LDB, LdbOperands},
+	InstructionFormat{"LDH", Opcode::LDH, LdhOperands},
+	InstructionFormat{"LDW", Opcode::LDW, LdwOperands},
+	InstructionFormat{"STB", Opcode::STB, StbOperands},
+	InstructionFormat{"STH", Opcode::STH, SthOperands},
+	InstructionFormat{"STW", Opcode::STW, StwOperands},
+	InstructionFormat{"SXT", Opcode::SXT, SxtOperands},
+	InstructionFormat{"BSWAP", Opcode::BSWAP, BswapOperands}};
 
 }
 

@@ -17,7 +17,15 @@ enum class Opcode : uint8_t {
 	SRA = 0X09,
 	MUL = 0X0A,
 	UDIV = 0X0B,
-	SDIV = 0X0C
+	SDIV = 0X0C,
+	LDB = 0x10,
+	LDH = 0x11,
+	LDW = 0x12,
+	STB = 0x13,
+	STH = 0x14,
+	STW = 0x15,
+	SXT = 0x16,
+	BSWAP = 0x17
 };
 
 }

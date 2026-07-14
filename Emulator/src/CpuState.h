@@ -12,13 +12,13 @@ public:
 	uint32_t GetRegister(size_t index) const;
 	void SetRegister(size_t index, uint32_t value);
 
-	uint32_t ProgramCounter() const;
-	void SetProgramCounter(uint32_t pc);
-	void AdvanceProgramCounter();
+	uint32_t InstructionPointer() const;
+	void SetInstructionPointer(uint32_t ip);
+	void AdvanceInstructionPointer();
 
 private:
 	std::array<uint32_t, 16> m_Registers{};
-	uint32_t m_Pc = 0;
+	uint32_t m_Ip = 0;
 };
 
 }

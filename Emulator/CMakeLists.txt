@@ -4,6 +4,7 @@ add_library(EmulatorInternal OBJECT
     src/Executor.cpp
     src/Emulator.cpp
     src/Tracer.cpp
+    src/Ram.cpp
 )
 
 target_include_directories(EmulatorInternal PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)

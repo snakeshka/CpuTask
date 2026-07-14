@@ -16,7 +16,7 @@ TEST(CpuStateTests, InitializesProgramCounterToZero)
 {
 	const Emulator::CpuState state;
 
-	EXPECT_EQ(state.ProgramCounter(), 0u);
+	EXPECT_EQ(state.InstructionPointer(), 0u);
 }
 
 TEST(CpuStateTests, SetsAndGetsRegisters)
@@ -34,9 +34,9 @@ TEST(CpuStateTests, AdvancesProgramCounterByInstructionSize)
 {
 	Emulator::CpuState state;
 
-	state.AdvanceProgramCounter();
-	EXPECT_EQ(state.ProgramCounter(), 4u);
+	state.AdvanceInstructionPointer();
+	EXPECT_EQ(state.InstructionPointer(), 4u);
 
-	state.AdvanceProgramCounter();
-	EXPECT_EQ(state.ProgramCounter(), 8u);
+	state.AdvanceInstructionPointer();
+	EXPECT_EQ(state.InstructionPointer(), 8u);
 }

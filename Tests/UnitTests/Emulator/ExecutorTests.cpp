@@ -1,19 +1,20 @@
 #include "CpuState.h"
 #include "Executor.h"
+#include "Ram.h"
 
 #include <Cpu/Isa/Opcode.h>
-
 #include <gtest/gtest.h>
 
 TEST(ExecutorTests, ExecutesLiInstruction)
 {
 	Emulator::CpuState state;
+	Emulator::Ram ram(65536);
 	const Emulator::Executor executor;
 
-	executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::LI, 1, 0x00, 0x80});
+	executor.Execute(state, ram, Cpu::Isa::Instruction{Cpu::Isa::Opcode::LI, 1, 0x00, 0x80}, 1);
 
 	EXPECT_EQ(state.GetRegister(1), 0x00008000u);
-	EXPECT_EQ(state.ProgramCounter(), 4u);
+	EXPECT_EQ(state.InstructionPointer(), 4u);
 }
 
 TEST(ExecutorTests, ExecutesAddInstruction)
@@ -21,12 +22,13 @@ TEST(ExecutorTests, ExecutesAddInstruction)
 	Emulator::CpuState state;
 	state.SetRegister(1, 5);
 	state.SetRegister(2, 7);
+	Emulator::Ram ram(65536);
 	const Emulator::Executor executor;
 
-	executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::ADD, 3, 1, 2});
+	executor.Execute(state, ram, Cpu::Isa::Instruction{Cpu::Isa::Opcode::ADD, 3, 1, 2}, 1);
 
 	EXPECT_EQ(state.GetRegister(3), 12u);
-	EXPECT_EQ(state.ProgramCounter(), 4u);
+	EXPECT_EQ(state.InstructionPointer(), 4u);
 }
 
 TEST(ExecutorTests, AddWrapsOnOverflow)
@@ -34,9 +36,10 @@ TEST(ExecutorTests, AddWrapsOnOverflow)
 	Emulator::CpuState state;
 	state.SetRegister(1, 0xFFFFFFFF);
 	state.SetRegister(2, 1);
+	Emulator::Ram ram(65536);
 	const Emulator::Executor executor;
 
-	executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::ADD, 3, 1, 2});
+	executor.Execute(state, ram, Cpu::Isa::Instruction{Cpu::Isa::Opcode::ADD, 3, 1, 2}, 1);
 
 	EXPECT_EQ(state.GetRegister(3), 0u);
 }
@@ -44,11 +47,11 @@ TEST(ExecutorTests, AddWrapsOnOverflow)
 TEST(ExecutorTests, ExecutesLuiInstructionAndPreservesLowerBytes)
 {
 	Emulator::CpuState state;
-	state.SetRegister(1, 0xDEADC0DE); // Младшие байты C0DE должны сохраниться
+	state.SetRegister(1, 0xDEADC0DE);
+	Emulator::Ram ram(65536);
 	const Emulator::Executor executor;
 
-	// LUI R1 0x1234
-	executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::LUI, 1, 0x34, 0x12});
+	executor.Execute(state, ram, Cpu::Isa::Instruction{Cpu::Isa::Opcode::LUI, 1, 0x34, 0x12}, 1);
 
 	EXPECT_EQ(state.GetRegister(1), 0x1234C0DEu);
 }
@@ -58,10 +61,10 @@ TEST(ExecutorTests, ExecutesSubInstruction)
 	Emulator::CpuState state;
 	state.SetRegister(1, 15);
 	state.SetRegister(2, 5);
+	Emulator::Ram ram(65536);
 	const Emulator::Executor executor;
 
-	// SUB R3 R1 R2
-	executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SUB, 3, 1, 2});
+	executor.Execute(state, ram, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SUB, 3, 1, 2}, 1);
 
 	EXPECT_EQ(state.GetRegister(3), 10u);
 }
@@ -70,66 +73,67 @@ TEST(ExecutorTests, ExecutesSllInstructionWithMasking)
 {
 	Emulator::CpuState state;
 	state.SetRegister(1, 1);
-	state.SetRegister(2, 33); // 33 & 0x1F = 1
+	state.SetRegister(2, 33);
+	Emulator::Ram ram(65536);
 	const Emulator::Executor executor;
 
-	// SLL R3 R1 R2
-	executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SLL, 3, 1, 2});
+	executor.Execute(state, ram, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SLL, 3, 1, 2}, 1);
 
-	EXPECT_EQ(state.GetRegister(3), 2u); // 1 << 1 = 2
+	EXPECT_EQ(state.GetRegister(3), 2u);
 }
 
 TEST(ExecutorTests, ExecutesSraInstructionPreservesSign)
 {
 	Emulator::CpuState state;
-	state.SetRegister(1, 0xF0000000); // Отрицательное число
+	state.SetRegister(1, 0xF0000000);
 	state.SetRegister(2, 4);
+	Emulator::Ram ram(65536);
 	const Emulator::Executor executor;
 
-	// SRA R3 R1 R2
-	executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SRA, 3, 1, 2});
+	executor.Execute(state, ram, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SRA, 3, 1, 2}, 1);
 
-	EXPECT_EQ(state.GetRegister(3), 0xFF000000u); // Знак сохранился
+	EXPECT_EQ(state.GetRegister(3), 0xFF000000u);
 }
 
 TEST(ExecutorTests, ExecutesSdivInstructionSigned)
 {
 	Emulator::CpuState state;
-	state.SetRegister(1, 0xFFFFFFFB); // -5
-	state.SetRegister(2, 0xFFFFFFFF); // -1
+	state.SetRegister(1, 0xFFFFFFFB);
+	state.SetRegister(2, 0xFFFFFFFF);
+	Emulator::Ram ram(65536);
 	const Emulator::Executor executor;
 
-	// SDIV R3 R1 R2
-	executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SDIV, 3, 1, 2});
+	executor.Execute(state, ram, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SDIV, 3, 1, 2}, 1);
 
-	EXPECT_EQ(state.GetRegister(3), 5u); // -5 / -1 = 5
+	EXPECT_EQ(state.GetRegister(3), 5u);
 }
 
-// Проверяем, что беззнаковое деление на ноль возвращает правильный статус
 TEST(ExecutorTests, UdivReturnsDivisionByZeroStatus)
 {
 	Emulator::CpuState state;
 	state.SetRegister(1, 10);
-	state.SetRegister(2, 0); // Делитель = 0
+	state.SetRegister(2, 0);
+	Emulator::Ram ram(65536);
 	const Emulator::Executor executor;
-	// Выполняем UDIV R3 R1 R2
-	auto status = executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::UDIV, 3, 1, 2});
+
+	auto status = executor.Execute(state, ram, Cpu::Isa::Instruction{Cpu::Isa::Opcode::UDIV, 3, 1, 2}, 1);
 
 	EXPECT_EQ(status, Emulator::ExecutionStatus::DivisionByZero);
 }
-// Проверяем, что знаковое деление на ноль возвращает правильный статус
+
 TEST(ExecutorTests, SdivReturnsDivisionByZeroStatus)
 {
 	Emulator::CpuState state;
-	state.SetRegister(1, 0xFFFFFFFB); // -5
-	state.SetRegister(2, 0);		  // Делитель = 0
+	state.SetRegister(1, 0xFFFFFFFB);
+	state.SetRegister(2, 0);
+	Emulator::Ram ram(65536);
 	const Emulator::Executor executor;
-	// Выполняем SDIV R3 R1 R2
-	auto status = executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SDIV, 3, 1, 2});
+
+	auto status = executor.Execute(state, ram, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SDIV, 3, 1, 2}, 1);
 
 	EXPECT_EQ(status, Emulator::ExecutionStatus::DivisionByZero);
 }
-// Тест на корректность строкового представления статусов (ToString)
+
 TEST(ExecutorTests, StatusToStringReturnsCorrectDescriptions)
 {
 	EXPECT_EQ(Emulator::ToString(Emulator::ExecutionStatus::Success), "Success");
@@ -141,11 +145,11 @@ TEST(ExecutorTests, ExecutesSraInstructionWithZeroShift)
 {
 	Emulator::CpuState state;
 	state.SetRegister(1, 0xF0000000);
-	state.SetRegister(2, 0); // сдвиг на 0 бит
+	state.SetRegister(2, 0);
+	Emulator::Ram ram(65536);
 	const Emulator::Executor executor;
 
-	// SRA R3 R1 R2
-	executor.Execute(state, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SRA, 3, 1, 2});
+	executor.Execute(state, ram, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SRA, 3, 1, 2}, 1);
 
-	EXPECT_EQ(state.GetRegister(3), 0xF0000000u); // Число не должно измениться
+	EXPECT_EQ(state.GetRegister(3), 0xF0000000u);
 }

@@ -7,6 +7,7 @@
 #include "CpuState.h"
 #include "Cpu/Isa/Instruction.h"
 #include <string>
+#include <algorithm>
 
 #include "Cpu/Isa/InstructionSet.h"
 #include "Cpu/Isa/OperandKind.h"
@@ -16,8 +17,8 @@ namespace Emulator
 
 struct TickInterval
 {
-	std::uint32_t begin;
-	std::uint32_t end;
+	uint32_t begin;
+	uint32_t end;
 };
 
 class Tracer
@@ -37,7 +38,7 @@ public:
 		if (!IsTickAllowed(m_Tick))
 			return;
 
-		m_Addr = state.ProgramCounter();
+		m_Addr = state.InstructionPointer();
 		m_ValB = 0;
 		m_ValC = 0;
 		

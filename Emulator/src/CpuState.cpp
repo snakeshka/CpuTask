@@ -6,25 +6,21 @@ uint32_t CpuState::GetRegister(size_t index) const
 {
 	return m_Registers[index];
 }
-
 void CpuState::SetRegister(size_t index, uint32_t value)
 {
 	m_Registers[index] = value;
 }
-
-uint32_t CpuState::ProgramCounter() const
+uint32_t CpuState::InstructionPointer() const
 {
-	return m_Pc;
+	return m_Ip;
 }
-
-void CpuState::SetProgramCounter(uint32_t pc)
+void CpuState::SetInstructionPointer(uint32_t ip)
 {
-	m_Pc = pc;
+	m_Ip = ip;
 }
-
-void CpuState::AdvanceProgramCounter()
+void CpuState::AdvanceInstructionPointer()
 {
-	m_Pc += 4;
+	m_Ip += 4;
 }
 
 }

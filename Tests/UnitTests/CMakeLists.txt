@@ -34,6 +34,7 @@ add_executable(UnitTests
     Emulator/ExecutorTests.cpp
     Emulator/CpuStateTests.cpp
     Emulator/TracerTests.cpp
+    Emulator/RamTests.cpp
 )
 
 target_include_directories(UnitTests

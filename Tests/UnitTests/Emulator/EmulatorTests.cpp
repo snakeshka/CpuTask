@@ -26,7 +26,7 @@ TEST(EmulatorTests, RunsSimpleProgram)
 	ASSERT_TRUE(result.Success);
 	EXPECT_EQ(result.State.GetRegister(0), 0x00000001);
 	EXPECT_EQ(result.State.GetRegister(1), 0x00008001);
-	EXPECT_EQ(result.State.ProgramCounter(), 12u);
+	EXPECT_EQ(result.State.InstructionPointer(), 12u);
 
 	for (size_t i = 2; i < 16; ++i)
 	{

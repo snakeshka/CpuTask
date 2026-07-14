@@ -2,6 +2,7 @@
 
 #include "CpuState.h"
 #include "Tracer.h"
+#include "Ram.h"
 #include "Cpu/Common/Types.h"
 
 #include <string>
@@ -18,7 +19,14 @@ struct EmulatorResult
 class Emulator
 {
 public:
-	EmulatorResult Run(const Cpu::Bytecode &bytecode, bool traceEnabled = false, std::vector<TickInterval> traceIntervals = {}) const;
+	EmulatorResult Run(
+		const Cpu::Bytecode &bytecode,
+		bool traceEnabled = false,
+		std::vector<TickInterval> traceIntervals = {},
+		uint32_t ramSize = 65536,
+		bool warnUninit = false,
+		std::vector<AddrInterval> ramIntervals = {},
+		bool ramTraceEnabled = false) const;
 };
 
 }

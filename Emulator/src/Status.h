@@ -8,7 +8,9 @@ enum class ExecutionStatus
 {
 	Success,
 	DivisionByZero,
-	IllegalInstruction
+	IllegalInstruction,
+	MemoryOutOfBounds
+
 };
 
 inline std::string_view ToString(ExecutionStatus status)
@@ -21,6 +23,8 @@ inline std::string_view ToString(ExecutionStatus status)
 			return "division by zero";
 		case ExecutionStatus::IllegalInstruction:
 			return "illegal instruction";
+		case ExecutionStatus::MemoryOutOfBounds:
+			return "memory access out of bounds";
 	}
 	return "unknown error";
 }
