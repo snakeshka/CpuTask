@@ -1,6 +1,5 @@
 ﻿#создаем internal object для тестов
 add_library(EmulatorInternal OBJECT
-    src/CpuState.cpp
     src/Executor.cpp
     src/Emulator.cpp
     src/Tracer.cpp

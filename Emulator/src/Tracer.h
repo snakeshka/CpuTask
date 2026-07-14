@@ -24,7 +24,7 @@ struct TickInterval
 class Tracer
 {
 public:
-	explicit Tracer(bool enabled, std::vector<TickInterval> intervals = {})
+	explicit Tracer(const bool enabled, std::vector<TickInterval> intervals = {})
 		: m_Enabled(enabled)
 		, m_Intervals(std::move(intervals))
 	{
@@ -92,7 +92,7 @@ private:
 		return false;
 	}
 
-	void PrintTraceLine(const CpuState &state, const Cpu::Isa::Instruction &instruction);
+	void PrintTraceLine(const CpuState &state, const Cpu::Isa::Instruction &instruction) const;
 #endif
 };
 

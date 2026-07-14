@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <algorithm>
 
+#include "Cpu/Common/Assert.h"
+
 namespace Emulator
 {
 Ram::Ram(uint32_t maxSize, bool warnUninit)
@@ -16,12 +18,9 @@ Ram::Ram(uint32_t maxSize, bool warnUninit)
 	}
 }
 
-void Ram::CheckBounds(uint32_t address)
+void Ram::CheckBounds(uint32_t address) const
 {
-	if (address >= m_MaxSize)
-	{
-		throw std::out_of_range("Internal error: unchecked RAM access at address 0x" + std::to_string(address));
-	}
+	CPU_ASSERT(address < m_MaxSize, "Unchecked memory access out of bounds!");
 }
 
 bool Ram::IsValidRange(std::uint64_t address, uint32_t size) const
@@ -41,19 +40,19 @@ Ram::Page &Ram::GetOrCreatePage(uint32_t pageIndex)
 
 void Ram::WriteByteInternal(uint32_t address, uint8_t value)
 {
-	uint32_t page_index = address / PageSize;
+	uint32_t pageIndex = address / PageSize;
 	uint32_t offset = address % PageSize;
-	Page &page = GetOrCreatePage(page_index);
+	Page &page = GetOrCreatePage(pageIndex);
 	page.data[offset] = value;
 	page.initialized[offset] = true;
 }
 
 uint8_t Ram::ReadByteInternal(uint32_t address, uint32_t tick)
 {
-	uint32_t page_index = address / PageSize;
+	uint32_t pageIndex = address / PageSize;
 	uint32_t offset = address % PageSize;
 
-	auto it = m_Pages.find(page_index);
+	const auto it = m_Pages.find(pageIndex);
 	if (it == m_Pages.end())
 	{
 		if (m_WarnUninit)
@@ -98,7 +97,7 @@ uint32_t Ram::ReadWord(uint32_t address, uint32_t tick)
 	return val;
 }
 
-void Ram::LogTrace(uint32_t cellAddr, uint32_t oldVal, uint32_t newVal, uint32_t tick)
+void Ram::LogTrace(uint32_t cellAddr, uint32_t oldVal, uint32_t newVal, uint32_t tick) const
 {
 	if (tick != 0 && m_TraceEnabled && IsAddrTraceAllowed(cellAddr))
 	{

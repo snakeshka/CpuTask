@@ -21,6 +21,8 @@ public:
 private:
 	using Handler = ExecutionStatus (*)(CpuState &, Ram &, const Cpu::Isa::Instruction &, uint32_t);
 
+	static constexpr std::array<Handler, 256> CreateHandlersMap();
+
 	std::array<Handler, 256> m_Handlers{};
 
 	static ExecutionStatus ExecuteIllegal(CpuState &state, Ram &ram, const Cpu::Isa::Instruction &instruction, uint32_t tick);

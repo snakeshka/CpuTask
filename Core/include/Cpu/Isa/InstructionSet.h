@@ -4,14 +4,80 @@
 
 #include <optional>
 #include <span>
+#include <array>
 #include <string_view>
 
 namespace Cpu::Isa
 {
-std::span<const InstructionFormat> instructionSet();
 
-std::optional<InstructionFormat> findInstructionByMnemonic(std::string_view mnemonic);
+inline constexpr std::array<OperandKind, 2> RIOperands = {
+	OperandKind::Register,
+	OperandKind::Immediate16,
+};
 
-std::optional<InstructionFormat> findInstructionByOpcode(Opcode opcode);
+inline constexpr std::array<OperandKind, 2> RUIOperands = {
+	OperandKind::Register,
+	OperandKind::UpperImmediate16,
+};
+
+inline constexpr std::array<OperandKind, 3> RRROperands = {
+	OperandKind::Register,
+	OperandKind::Register,
+	OperandKind::Register,
+};
+
+inline constexpr std::array<InstructionFormat, 21> Instructions = {
+	InstructionFormat{"LI", Opcode::LI, RIOperands},
+	InstructionFormat{"LUI", Opcode::LUI, RUIOperands},
+	InstructionFormat{"ADD", Opcode::ADD, RRROperands},
+	InstructionFormat{"SUB", Opcode::SUB, RRROperands},
+	InstructionFormat{"AND", Opcode::AND, RRROperands},
+	InstructionFormat{"OR", Opcode::OR, RRROperands},
+	InstructionFormat{"XOR", Opcode::XOR, RRROperands},
+	InstructionFormat{"SLL", Opcode::SLL, RRROperands},
+	InstructionFormat{"SRL", Opcode::SRL, RRROperands},
+	InstructionFormat{"SRA", Opcode::SRA, RRROperands},
+	InstructionFormat{"MUL", Opcode::MUL, RRROperands},
+	InstructionFormat{"UDIV", Opcode::UDIV, RRROperands},
+	InstructionFormat{"SDIV", Opcode::SDIV, RRROperands},
+	InstructionFormat{"LDB", Opcode::LDB, RIOperands},
+	InstructionFormat{"LDH", Opcode::LDH, RIOperands},
+	InstructionFormat{"LDW", Opcode::LDW, RIOperands},
+	InstructionFormat{"STB", Opcode::STB, RIOperands},
+	InstructionFormat{"STH", Opcode::STH, RIOperands},
+	InstructionFormat{"STW", Opcode::STW, RIOperands},
+	InstructionFormat{"SXT", Opcode::SXT, RIOperands},
+	InstructionFormat{"BSWAP", Opcode::BSWAP, RIOperands}};
+
+inline std::span<const InstructionFormat> instructionSet()
+{
+	return Instructions;
+}
+
+constexpr std::optional<InstructionFormat> findInstructionByMnemonic(std::string_view mnemonic)
+{
+	for (const auto &instruction : Instructions)
+	{
+		if (instruction.mnemonic == mnemonic)
+		{
+			return instruction;
+		}
+	}
+
+	return std::nullopt;
+}
+
+constexpr std::optional<InstructionFormat> findInstructionByOpcode(Opcode opcode)
+{
+	for (const auto &instruction : Instructions)
+	{
+		if (instruction.opcode == opcode)
+		{
+			return instruction;
+		}
+	}
+
+	return std::nullopt;
+}
 
 }

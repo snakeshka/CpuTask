@@ -48,13 +48,14 @@ private:
 	std::unordered_map<uint32_t, std::unique_ptr<Page>> m_Pages;
 
 	Page &GetOrCreatePage(uint32_t pageIndex);
-	void CheckBounds(uint32_t address);
+	void CheckBounds(uint32_t address) const;
 	bool IsAddrTraceAllowed(uint32_t address) const;
 
 	// Внутреннее чтение/запись байт без проверки границ
 	uint8_t ReadByteInternal(uint32_t address, uint32_t tick);
 	void WriteByteInternal(uint32_t address, uint8_t value);
-	void LogTrace(uint32_t cellAddr, uint32_t oldVal, uint32_t newVal, uint32_t tick);
+
+	void LogTrace(uint32_t cellAddr, uint32_t oldVal, uint32_t newVal, uint32_t tick) const;
 };
 
 }

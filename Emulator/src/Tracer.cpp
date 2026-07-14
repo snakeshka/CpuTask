@@ -6,7 +6,7 @@
 #if TRACING
 namespace Emulator
 {
-void Tracer::PrintTraceLine(const CpuState &state, const Cpu::Isa::Instruction &instruction)
+void Tracer::PrintTraceLine(const CpuState &state, const Cpu::Isa::Instruction &instruction) const
 {
 	auto formatOpt = Cpu::Isa::findInstructionByOpcode(instruction.opcode);
 	if (!formatOpt.has_value())

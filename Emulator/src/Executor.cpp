@@ -7,26 +7,23 @@
 namespace Emulator
 {
 Executor::Executor()
+	: m_Handlers(CreateHandlersMap())
 {
-	m_Handlers.fill(&Executor::ExecuteIllegal);
-	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::LI)] = &Executor::ExecuteLi;
-	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::LUI)] = &Executor::ExecuteLui;
-	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::ADD)] = &Executor::ExecuteAdd;
-	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::SUB)] = &Executor::ExecuteSub;
-	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::AND)] = &Executor::ExecuteAnd;
-	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::OR)] = &Executor::ExecuteOr;
-	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::XOR)] = &Executor::ExecuteXor;
-	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::SLL)] = &Executor::ExecuteSll;
-	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::SRL)] = &Executor::ExecuteSrl;
-	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::SRA)] = &Executor::ExecuteSra;
-	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::MUL)] = &Executor::ExecuteMul;
-	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::UDIV)] = &Executor::ExecuteUdiv;
-	m_Handlers[static_cast<uint8_t>(Cpu::Isa::Opcode::SDIV)] = &Executor::ExecuteSdiv;
+}
+
+namespace
+{
+constexpr uint8_t toIdx(Cpu::Isa::Opcode op)
+{
+	return static_cast<uint8_t>(op);
+}
 }
 
 ExecutionStatus Executor::Execute(CpuState &state, Ram &ram, const Cpu::Isa::Instruction &instruction, uint32_t tick) const
 {
 	const auto opcode = static_cast<uint8_t>(instruction.opcode);
+	CPU_ASSERT(opcode < m_Handlers.size(), "Opcode value exceeds handlers array boundary!");
+
 	auto status = m_Handlers[opcode](state, ram, instruction, tick);
 
 	if (status == ExecutionStatus::Success)
@@ -35,6 +32,36 @@ ExecutionStatus Executor::Execute(CpuState &state, Ram &ram, const Cpu::Isa::Ins
 	}
 
 	return status;
+}
+
+constexpr std::array<Executor::Handler, 256> Executor::CreateHandlersMap()
+{
+	std::array<Handler, 256> handlers{};
+
+	handlers.fill(&Executor::ExecuteIllegal);
+	handlers[toIdx(Cpu::Isa::Opcode::LI)]	= &Executor::ExecuteLi;
+	handlers[toIdx(Cpu::Isa::Opcode::LUI)]	= &Executor::ExecuteLui;
+	handlers[toIdx(Cpu::Isa::Opcode::ADD)]	= &Executor::ExecuteAdd;
+	handlers[toIdx(Cpu::Isa::Opcode::SUB)]	= &Executor::ExecuteSub;
+	handlers[toIdx(Cpu::Isa::Opcode::AND)]	= &Executor::ExecuteAnd;
+	handlers[toIdx(Cpu::Isa::Opcode::OR)]	= &Executor::ExecuteOr;
+	handlers[toIdx(Cpu::Isa::Opcode::XOR)]	= &Executor::ExecuteXor;
+	handlers[toIdx(Cpu::Isa::Opcode::SLL)]	= &Executor::ExecuteSll;
+	handlers[toIdx(Cpu::Isa::Opcode::SRL)]	= &Executor::ExecuteSrl;
+	handlers[toIdx(Cpu::Isa::Opcode::SRA)]	= &Executor::ExecuteSra;
+	handlers[toIdx(Cpu::Isa::Opcode::MUL)]	= &Executor::ExecuteMul;
+	handlers[toIdx(Cpu::Isa::Opcode::UDIV)]	= &Executor::ExecuteUdiv;
+	handlers[toIdx(Cpu::Isa::Opcode::SDIV)]	= &Executor::ExecuteSdiv;
+	handlers[toIdx(Cpu::Isa::Opcode::LDB)]	= &Executor::ExecuteLdb;
+	handlers[toIdx(Cpu::Isa::Opcode::LDH)]	= &Executor::ExecuteLdh;
+	handlers[toIdx(Cpu::Isa::Opcode::LDW)]	= &Executor::ExecuteLdw;
+	handlers[toIdx(Cpu::Isa::Opcode::STB)]	= &Executor::ExecuteStb;
+	handlers[toIdx(Cpu::Isa::Opcode::STH)]	= &Executor::ExecuteSth;
+	handlers[toIdx(Cpu::Isa::Opcode::STW)]	= &Executor::ExecuteStw;
+	handlers[toIdx(Cpu::Isa::Opcode::SXT)]	= &Executor::ExecuteSxt;
+	handlers[toIdx(Cpu::Isa::Opcode::BSWAP)] = &Executor::ExecuteBswap;
+
+	return handlers;
 }
 
 ExecutionStatus Executor::ExecuteIllegal(CpuState &state, Ram &ram, const Cpu::Isa::Instruction &instruction, uint32_t tick)
