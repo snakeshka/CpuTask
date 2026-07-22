@@ -252,3 +252,131 @@ TEST(ExecutorTests, ExecutesByteSwapBswap)
 	executor.Execute(state, ram, Cpu::Isa::Instruction{Cpu::Isa::Opcode::BSWAP, 2, 1, 2}, 1);
 	EXPECT_EQ(state.GetRegister(2), 0x78563412u);
 }
+// ============================================================================
+// Тесты системных регистров и работы со стеком (SCRW, SCRR, ASPI, ASPR)
+// ============================================================================
+TEST(ExecutorTests, ExecutesScrwAndScrr)
+{
+	Emulator::CpuState state;
+	Emulator::Ram ram(65536);
+	const Emulator::Executor executor;
+	state.SetRegister(1, 0xC000);
+	// SCRW SP_TOP (индекс 1) R1
+	executor.Execute(state, ram, Cpu::Isa::Instruction{ Cpu::Isa::Opcode::SCRW, 1, 1, 0 }, 1);
+	EXPECT_EQ(state.GetScr(1), 0xC000u);
+	// SCRR R2 SP_TOP (индекс 1)
+	executor.Execute(state, ram, Cpu::Isa::Instruction{ Cpu::Isa::Opcode::SCRR, 2, 1, 0 }, 2);
+	EXPECT_EQ(state.GetRegister(2), 0xC000u);
+}
+TEST(ExecutorTests, ExecutesAspiAllocationAndDeallocation)
+{
+	Emulator::CpuState state;
+	Emulator::Ram ram(65536);
+	const Emulator::Executor executor;
+
+	state.SetScr(1, 0xC000); // SP_TOP = 0xC000 (49152)
+	state.SetScr(2, 0x1000); // SP_SIZE = 4096 байт
+
+	// ASPI R0 -16 (Выделяем 16 байт на стеке)
+	// Immediate -16 = 0xFFF0
+	auto statusAlloc = executor.Execute(state, ram, Cpu::Isa::Instruction{ Cpu::Isa::Opcode::ASPI, 0, 0xF0, 0xFF }, 1);
+	EXPECT_EQ(statusAlloc, Emulator::ExecutionStatus::Success);
+	EXPECT_EQ(state.GetScr(1), 0xBFF0u); // 0xC000 - 16 = 0xBFF0 (49136)
+	EXPECT_EQ(state.GetScr(2), 0x0FF0u); // 4096 - 16 = 4080 (0x0FF0)
+	EXPECT_EQ(state.GetRegister(0), 0xBFF0u);
+
+	// ASPI R0 16 (Освобождаем 16 байт обратно)
+	auto statusFree = executor.Execute(state, ram, Cpu::Isa::Instruction{ Cpu::Isa::Opcode::ASPI, 0, 0x10, 0x00 }, 2);
+	EXPECT_EQ(statusFree, Emulator::ExecutionStatus::Success);
+	EXPECT_EQ(state.GetScr(1), 0xC000u);
+	EXPECT_EQ(state.GetScr(2), 0x1000u);
+}
+
+TEST(ExecutorTests, AspiReturnsStackOverflowWhenExceeded)
+{
+	Emulator::CpuState state;
+	Emulator::Ram ram(65536);
+	const Emulator::Executor executor;
+	state.SetScr(1, 0xC000);
+	state.SetScr(2, 100); // Доступно всего 100 байт
+	// Запрашиваем 128 байт (-128 = 0xFF80)
+	auto status = executor.Execute(state, ram, Cpu::Isa::Instruction{ Cpu::Isa::Opcode::ASPI, 0, 0x80, 0xFF }, 1);
+	EXPECT_EQ(status, Emulator::ExecutionStatus::StackOverflow);
+}
+// ============================================================================
+// Тесты инструкций переходов (RJMP, BRZ, BRNZ, AJMP, CALL)
+// ============================================================================
+TEST(ExecutorTests, ExecutesRelativeJumpRJMP)
+{
+	Emulator::CpuState state;
+	state.SetInstructionPointer(100);
+	Emulator::Ram ram(65536);
+	const Emulator::Executor executor;
+	// RJMP +2 (смещение 2 команды = +8 байт) -> 100 + 8 = 108
+	executor.Execute(state, ram, Cpu::Isa::Instruction{ Cpu::Isa::Opcode::RJMP, 0, 2, 0 }, 1);
+	EXPECT_EQ(state.InstructionPointer(), 108u);
+}
+TEST(ExecutorTests, ExecutesConditionalBranchBRZ)
+{
+	Emulator::CpuState state;
+	state.SetInstructionPointer(100);
+	state.SetRegister(1, 0); // R1 == 0 (условие выполнено)
+	state.SetRegister(2, 5); // R2 != 0 (условие НЕ выполнено)
+	Emulator::Ram ram(65536);
+	const Emulator::Executor executor;
+	// BRZ R1 +4 -> переход должен произойти (100 + 16 = 116)
+	executor.Execute(state, ram, Cpu::Isa::Instruction{ Cpu::Isa::Opcode::BRZ, 1, 4, 0 }, 1);
+	EXPECT_EQ(state.InstructionPointer(), 116u);
+	// BRZ R2 +4 -> переход НЕ произойдет, просто Advance (+4 байта) -> 120
+	executor.Execute(state, ram, Cpu::Isa::Instruction{ Cpu::Isa::Opcode::BRZ, 2, 4, 0 }, 2);
+	EXPECT_EQ(state.InstructionPointer(), 120u);
+}
+TEST(ExecutorTests, ExecutesCallAndReturn)
+{
+	Emulator::CpuState state;
+	state.SetInstructionPointer(0x1000);
+	state.SetRegister(5, 0x2000); // Целевой адрес функции в R5
+	Emulator::Ram ram(65536);
+	const Emulator::Executor executor;
+	// CALL R5 -> IP станосится 0x2000, в R1 сохраняется адрес возврата 0x1004
+	executor.Execute(state, ram, Cpu::Isa::Instruction{ Cpu::Isa::Opcode::CALL, 5, 0, 0 }, 1);
+	EXPECT_EQ(state.InstructionPointer(), 0x2000u);
+	EXPECT_EQ(state.GetRegister(1), 0x1004u); // R1 = 0x1000 + 4
+	// AJMP R1 (эмуляция псевдокоманды RET) -> возврат на 0x1004
+	executor.Execute(state, ram, Cpu::Isa::Instruction{ Cpu::Isa::Opcode::AJMP, 1, 0, 0 }, 2);
+	EXPECT_EQ(state.InstructionPointer(), 0x1004u);
+}
+// ============================================================================
+// Тесты инструкций сравнения (EQ, NE, LT, GE, SLT, SGE)
+// ============================================================================
+TEST(ExecutorTests, ExecutesComparisonInstructions)
+{
+	Emulator::CpuState state;
+	state.SetRegister(1, 10);
+	state.SetRegister(2, 20);
+	Emulator::Ram ram(65536);
+	const Emulator::Executor executor;
+	// EQ R3 R1 R2 (10 == 20 -> 0)
+	executor.Execute(state, ram, Cpu::Isa::Instruction{ Cpu::Isa::Opcode::EQ, 3, 1, 2 }, 1);
+	EXPECT_EQ(state.GetRegister(3), 0u);
+	// NE R3 R1 R2 (10 != 20 -> 1)
+	executor.Execute(state, ram, Cpu::Isa::Instruction{ Cpu::Isa::Opcode::NE, 3, 1, 2 }, 2);
+	EXPECT_EQ(state.GetRegister(3), 1u);
+	// LT R3 R1 R2 (10 < 20 -> 1)
+	executor.Execute(state, ram, Cpu::Isa::Instruction{ Cpu::Isa::Opcode::LT, 3, 1, 2 }, 3);
+	EXPECT_EQ(state.GetRegister(3), 1u);
+}
+TEST(ExecutorTests, ExecutesSignedComparisons)
+{
+	Emulator::CpuState state;
+	state.SetRegister(1, 0xFFFFFFFF); // -1 в знаковом представлении
+	state.SetRegister(2, 1);          // +1
+	Emulator::Ram ram(65536);
+	const Emulator::Executor executor;
+	// Беззнаковое сравнение LT: 0xFFFFFFFF < 1 -> false (0)
+	executor.Execute(state, ram, Cpu::Isa::Instruction{ Cpu::Isa::Opcode::LT, 3, 1, 2 }, 1);
+	EXPECT_EQ(state.GetRegister(3), 0u);
+	// Знаковое сравнение SLT: -1 < 1 -> true (1)
+	executor.Execute(state, ram, Cpu::Isa::Instruction{ Cpu::Isa::Opcode::SLT, 3, 1, 2 }, 2);
+	EXPECT_EQ(state.GetRegister(3), 1u);
+}

@@ -174,12 +174,17 @@ std::optional<Cpu::Bytecode> readBytecode(const std::string &path)
 int main(int argc, char *argv[])
 {
 	std::string programPath;
+
 	bool traceEnabled = false;
 	std::vector<Emulator::TickInterval> traceIntervals;
+
 	uint32_t ramSize = 65536;
 	bool warnUninit = false;
 	bool ramTraceEnabled = false;
 	std::vector<Emulator::AddrInterval> ramIntervals;
+	
+	bool clearStack = false;
+
 	for (int i = 1; i < argc; ++i)
 	{
 		std::string_view arg = argv[i];
@@ -216,6 +221,10 @@ int main(int argc, char *argv[])
 			traceEnabled = true;
 			traceIntervals = parseTraceTicks(arg.substr(14));
 		}
+		else if (arg == "--clear-stack")
+		{
+			clearStack = true;
+		}
 		else
 		{
 			programPath = arg;
@@ -241,7 +250,8 @@ int main(int argc, char *argv[])
 		ramSize,
 		warnUninit,
 		ramIntervals,
-		ramTraceEnabled);
+		ramTraceEnabled,
+		clearStack);
 	if (!result.Success)
 	{
 		std::cerr << "error: " << result.Error << '\n';

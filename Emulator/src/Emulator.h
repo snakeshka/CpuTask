@@ -26,7 +26,8 @@ public:
 		uint32_t ramSize = 65536,
 		bool warnUninit = false,
 		std::vector<AddrInterval> ramIntervals = {},
-		bool ramTraceEnabled = false) const;
+		bool ramTraceEnabled = false,
+		bool clearStack = false) const;
 };
 
 }

@@ -23,6 +23,8 @@ public:
 
 	bool IsValidRange(std::uint64_t address, uint32_t size) const;
 	void SetTraceEnabled(bool enabled, std::vector<AddrInterval> intervals = {});
+	void FreeMemoryRegion(uint32_t address, uint32_t size);
+	void ResetInitFlagInternal(uint32_t address);
 
 	// Публичные методы чтения\записи памяти естественного размера
 	uint8_t ReadByte(uint32_t address, uint32_t tick);
@@ -43,6 +45,7 @@ private:
 	uint32_t m_MaxSize = 0;
 	bool m_WarnUninit = false;
 	bool m_TraceEnabled = false;
+	bool m_clearStack = false;
 	std::vector<AddrInterval> m_TraceIntervals;
 
 	std::unordered_map<uint32_t, std::unique_ptr<Page>> m_Pages;

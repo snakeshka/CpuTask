@@ -60,6 +60,21 @@ constexpr std::array<Executor::Handler, 256> Executor::CreateHandlersMap()
 	handlers[toIdx(Cpu::Isa::Opcode::STW)]	= &Executor::ExecuteStw;
 	handlers[toIdx(Cpu::Isa::Opcode::SXT)]	= &Executor::ExecuteSxt;
 	handlers[toIdx(Cpu::Isa::Opcode::BSWAP)] = &Executor::ExecuteBswap;
+	handlers[toIdx(Cpu::Isa::Opcode::SCRW)] = &Executor::ExecuteScrw;
+	handlers[toIdx(Cpu::Isa::Opcode::SCRR)] = &Executor::ExecuteScrr;
+	handlers[toIdx(Cpu::Isa::Opcode::ASPI)] = &Executor::ExecuteAspi;
+	handlers[toIdx(Cpu::Isa::Opcode::ASPR)] = &Executor::ExecuteAspr;
+	handlers[toIdx(Cpu::Isa::Opcode::RJMP)] = &Executor::ExecuteRjmp;
+	handlers[toIdx(Cpu::Isa::Opcode::BRZ)] = &Executor::ExecuteBrz;
+	handlers[toIdx(Cpu::Isa::Opcode::BRNZ)] = &Executor::ExecuteBrnz;
+	handlers[toIdx(Cpu::Isa::Opcode::AJMP)] = &Executor::ExecuteAjmp;
+	handlers[toIdx(Cpu::Isa::Opcode::CALL)] = &Executor::ExecuteCall;
+	handlers[toIdx(Cpu::Isa::Opcode::EQ)] = &Executor::ExecuteEq;
+	handlers[toIdx(Cpu::Isa::Opcode::NE)] = &Executor::ExecuteNe;
+	handlers[toIdx(Cpu::Isa::Opcode::LT)] = &Executor::ExecuteLt;
+	handlers[toIdx(Cpu::Isa::Opcode::GE)] = &Executor::ExecuteGe;
+	handlers[toIdx(Cpu::Isa::Opcode::SLT)] = &Executor::ExecuteSlt;
+	handlers[toIdx(Cpu::Isa::Opcode::SGE)] = &Executor::ExecuteSge;
 
 	return handlers;
 }
@@ -278,6 +293,139 @@ ExecutionStatus Executor::ExecuteBswap(CpuState &state, Ram &ram, const Cpu::Isa
 		res = (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
 	}
 	state.SetRegister(instruction.a, res);
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteScrw(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	state.SetScr(instruction.a, state.GetRegister(instruction.b));
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteScrr(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	state.SetRegister(instruction.a, state.GetScr(instruction.b));
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteAspi(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	int16_t sI = static_cast<int16_t>(instruction.immediate16());
+	uint32_t spSize = state.GetScr(2);
+	if (sI < 0 && spSize < static_cast<uint32_t>(-sI))
+	{
+		return ExecutionStatus::StackOverflow;
+	}
+	uint32_t spTop = state.GetScr(1);
+	if (sI > 0)
+	{
+		ram.FreeMemoryRegion(spTop, static_cast<uint32_t>(sI));
+	}
+	state.SetScr(1, spTop + sI);
+	state.SetScr(2, spSize + sI);
+	state.SetRegister(instruction.a, spTop + sI);
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteAspr(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	int32_t sI = static_cast<int32_t>(state.GetRegister(instruction.b));
+	uint32_t spSize = state.GetScr(2);
+	if (sI < 0 && spSize < static_cast<uint32_t>(-sI))
+	{
+		return ExecutionStatus::StackOverflow;
+	}
+	uint32_t spTop = state.GetScr(1);
+	if (sI > 0)
+	{
+		ram.FreeMemoryRegion(spTop, static_cast<uint32_t>(sI));
+	}
+	state.SetScr(1, spTop + sI);
+	state.SetScr(2, spSize + sI);
+	state.SetRegister(instruction.a, spTop + sI);
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteRjmp(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	int16_t offset = static_cast<int16_t>(instruction.immediate16());
+	// Поскольку Execute() увеличивает IP на 4 после успешного выполнения,
+	// вычитаем 4 из целевого IP, чтобы компенсировать этот шаг.
+	state.SetInstructionPointer(state.InstructionPointer() + offset * 4 - 4);
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteBrz(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	if (state.GetRegister(instruction.a) == 0)
+	{
+		int16_t offset = static_cast<int16_t>(instruction.immediate16());
+		state.SetInstructionPointer(state.InstructionPointer() + offset * 4 - 4);
+	}
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteBrnz(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	if (state.GetRegister(instruction.a) != 0)
+	{
+		int16_t offset = static_cast<int16_t>(instruction.immediate16());
+		state.SetInstructionPointer(state.InstructionPointer() + offset * 4 - 4);
+	}
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteAjmp(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	state.SetInstructionPointer(state.GetRegister(instruction.a) - 4);
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteCall(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	// Сохраняем адрес следующей инструкции в R1
+	state.SetRegister(1, state.InstructionPointer() + 4);
+	state.SetInstructionPointer(state.GetRegister(instruction.a) - 4);
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteEq(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	state.SetRegister(instruction.a, state.GetRegister(instruction.b) == state.GetRegister(instruction.c) ? 1 : 0);
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteNe(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	state.SetRegister(instruction.a, state.GetRegister(instruction.b) != state.GetRegister(instruction.c) ? 1 : 0);
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteLt(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	state.SetRegister(instruction.a, state.GetRegister(instruction.b) < state.GetRegister(instruction.c) ? 1 : 0);
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteGe(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	state.SetRegister(instruction.a, state.GetRegister(instruction.b) >= state.GetRegister(instruction.c) ? 1 : 0);
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteSlt(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	int32_t valB = static_cast<int32_t>(state.GetRegister(instruction.b));
+	int32_t valC = static_cast<int32_t>(state.GetRegister(instruction.c));
+	state.SetRegister(instruction.a, valB < valC ? 1 : 0);
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteSge(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	int32_t valB = static_cast<int32_t>(state.GetRegister(instruction.b));
+	int32_t valC = static_cast<int32_t>(state.GetRegister(instruction.c));
+	state.SetRegister(instruction.a, valB >= valC ? 1 : 0);
 	return ExecutionStatus::Success;
 }
 

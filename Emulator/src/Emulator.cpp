@@ -9,7 +9,7 @@
 
 namespace Emulator
 {
-EmulatorResult Emulator::Run(const Cpu::Bytecode &bytecode, bool traceEnabled, std::vector<TickInterval> traceIntervals, uint32_t ramSize, bool warnUninit, std::vector<AddrInterval> ramIntervals, bool ramTraceEnabled) const
+EmulatorResult Emulator::Run(const Cpu::Bytecode &bytecode, bool traceEnabled, std::vector<TickInterval> traceIntervals, uint32_t ramSize, bool warnUninit, std::vector<AddrInterval> ramIntervals, bool ramTraceEnabled, bool clearStack) const
 {
 	if (bytecode.size() % 4 != 0)
 	{

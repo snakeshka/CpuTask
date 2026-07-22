@@ -9,7 +9,6 @@
 
 namespace Cpu::Isa
 {
-
 inline constexpr std::array<OperandKind, 2> RIOperands = {
 	OperandKind::Register,
 	OperandKind::Immediate16,
@@ -26,7 +25,30 @@ inline constexpr std::array<OperandKind, 3> RRROperands = {
 	OperandKind::Register,
 };
 
-inline constexpr std::array<InstructionFormat, 21> Instructions = {
+inline constexpr std::array<OperandKind, 2> SROperands = {
+	OperandKind::SystemRegister,
+	OperandKind::Register,
+};
+
+inline constexpr std::array<OperandKind, 2> RSOperands = {
+	OperandKind::Register,
+	OperandKind::SystemRegister,
+};
+
+inline constexpr std::array<OperandKind, 2> RROperands = {
+	OperandKind::Register,
+	OperandKind::Register,
+};
+
+inline constexpr std::array<OperandKind, 1> ROperands = {
+	OperandKind::Register,
+};
+
+inline constexpr std::array<OperandKind, 1> IOperands = {
+	OperandKind::Immediate16,
+};
+
+inline constexpr std::array<InstructionFormat, 36> Instructions = {
 	InstructionFormat{"LI", Opcode::LI, RIOperands},
 	InstructionFormat{"LUI", Opcode::LUI, RUIOperands},
 	InstructionFormat{"ADD", Opcode::ADD, RRROperands},
@@ -47,7 +69,22 @@ inline constexpr std::array<InstructionFormat, 21> Instructions = {
 	InstructionFormat{"STH", Opcode::STH, RIOperands},
 	InstructionFormat{"STW", Opcode::STW, RIOperands},
 	InstructionFormat{"SXT", Opcode::SXT, RIOperands},
-	InstructionFormat{"BSWAP", Opcode::BSWAP, RIOperands}};
+	InstructionFormat{"BSWAP", Opcode::BSWAP, RIOperands},
+	InstructionFormat{"SCRW", Opcode::SCRW, SROperands},
+	InstructionFormat{"SCRR", Opcode::SCRR, RSOperands},
+	InstructionFormat{"ASPI", Opcode::ASPI, RIOperands},
+	InstructionFormat{"ASPR", Opcode::ASPR, RROperands},
+	InstructionFormat{"RJMP", Opcode::RJMP, IOperands},
+	InstructionFormat{"BRZ", Opcode::BRZ, RIOperands},
+	InstructionFormat{"BRNZ", Opcode::BRNZ, RIOperands},
+	InstructionFormat{"AJMP", Opcode::AJMP, ROperands},
+	InstructionFormat{"CALL", Opcode::CALL, ROperands},
+	InstructionFormat{"EQ", Opcode::EQ, RRROperands},
+	InstructionFormat{"NE", Opcode::NE, RRROperands},
+	InstructionFormat{"LT", Opcode::LT, RRROperands},
+	InstructionFormat{"GE", Opcode::GE, RRROperands},
+	InstructionFormat{"SLT", Opcode::SLT, RRROperands},
+	InstructionFormat{"SGE", Opcode::SGE, RRROperands}};
 
 inline std::span<const InstructionFormat> instructionSet()
 {

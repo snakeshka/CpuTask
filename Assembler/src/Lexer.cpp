@@ -52,6 +52,12 @@ std::vector<Token> Lexer::Lex(DiagnosticBag& diagnostics)
             continue;
         }
 
+        if (ch == '-' && m_Position + 1 < m_Source.size() && std::isdigit(static_cast<unsigned char>(m_Source[m_Position + 1])) != 0)
+		{
+			LexNumber(tokens, diagnostics);
+			continue;
+		}
+
         if (IsIdentifierStart(ch)) {
             LexIdentifier(tokens);
             continue;
@@ -121,6 +127,11 @@ void Lexer::LexNumber(std::vector<Token>& tokens, DiagnosticBag& diagnostics)
     const auto beginLocation = m_Location;
     const auto begin = m_Position;
     bool valid = true;
+
+    if (Peek() == '-')
+	{
+		Advance();
+	}
 
     if (Peek() == '0' && m_Position + 1 < m_Source.size() && (m_Source[m_Position + 1] == 'x' || m_Source[m_Position + 1] == 'X')) {
         Advance();

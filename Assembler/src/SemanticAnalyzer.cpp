@@ -14,6 +14,8 @@ std::string operandKindName(Cpu::Isa::OperandKind kind)
     switch (kind) {
     case Cpu::Isa::OperandKind::Register:
         return "register";
+    case Cpu::Isa::OperandKind::SystemRegister:
+        return "system register";
     case Cpu::Isa::OperandKind::Immediate16:
         return "16-bit immediate";
 	case Cpu::Isa::OperandKind::UpperImmediate16:
@@ -103,6 +105,46 @@ std::vector<Cpu::Isa::Instruction> SemanticAnalyzer::Analyze(
                 } else if (index == 2) {
                     instruction.c = *reg;
                 }
+            } else if (expected == Cpu::Isa::OperandKind::SystemRegister) {
+                if (operand.Kind != ParsedOperandKind::Identifier) {
+                    diagnostics.Add(Diagnostic{
+                        DiagnosticSeverity::Error,
+                        DiagnosticCode::WrongOperandType,
+                        operand.Range,
+                        "expected system register",
+                        });
+                    ok = false;
+                    continue;
+                }
+                uint8_t scrIndex = 0;
+                if (operand.Text == "IP") {
+                    scrIndex = 0;
+                }
+                else if (operand.Text == "SP_TOP") {
+                    scrIndex = 1;
+                }
+                else if (operand.Text == "SP_SIZE") {
+                    scrIndex = 2;
+                }
+                else {
+                    diagnostics.Add(Diagnostic{
+                        DiagnosticSeverity::Error,
+                        DiagnosticCode::InvalidRegister,
+                        operand.Range,
+                        "invalid system register \"" + operand.Text + "\"",
+                        });
+                    ok = false;
+                    continue;
+                }
+                if (index == 0) {
+                    instruction.a = scrIndex;
+                }
+                else if (index == 1) {
+                    instruction.b = scrIndex;
+                }
+                else if (index == 2) {
+                    instruction.c = scrIndex;
+                }
             } else if ( expected == Cpu::Isa::OperandKind::Immediate16 ||
 						expected == Cpu::Isa::OperandKind::UpperImmediate16) {
                 if (operand.Kind != ParsedOperandKind::Number) {
@@ -137,9 +179,14 @@ std::vector<Cpu::Isa::Instruction> SemanticAnalyzer::Analyze(
 
 bool SemanticAnalyzer::parseImmediate16(const ParsedOperand& operand, uint16_t& value, DiagnosticBag& diagnostics)
 {
-    unsigned long parsed = 0;
+    long long parsed = 0;
     int base = 10;
     std::string_view text = operand.Text;
+	bool negative = false;
+	if (text.starts_with('-')) {
+		negative = true;
+		text.remove_prefix(1);
+	}
     if (text.size() > 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X')) {
         text.remove_prefix(2);
         base = 16;
@@ -159,7 +206,11 @@ bool SemanticAnalyzer::parseImmediate16(const ParsedOperand& operand, uint16_t& 
         return false;
     }
 
-    if (parsed > 0xFFFFUL) {
+    if (negative) {
+		parsed = -parsed;
+	}
+
+    if (parsed < -0x8000LL || parsed > 0xFFFFLL) {
         diagnostics.Add(Diagnostic{
             DiagnosticSeverity::Error,
             DiagnosticCode::ImmediateOutOfRange,

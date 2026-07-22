@@ -47,6 +47,22 @@ private:
 	static ExecutionStatus ExecuteStw(CpuState &state, Ram &ram, const Cpu::Isa::Instruction &instruction, uint32_t tick);
 	static ExecutionStatus ExecuteSxt(CpuState &state, Ram &ram, const Cpu::Isa::Instruction &instruction, uint32_t tick);
 	static ExecutionStatus ExecuteBswap(CpuState &state, Ram &ram, const Cpu::Isa::Instruction &instruction, uint32_t tick);
+	static ExecutionStatus ExecuteScrw(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteScrr(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteAspi(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteAspr(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteRjmp(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteBrz(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteBrnz(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteAjmp(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteCall(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteEq(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteNe(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteLt(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteGe(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteSlt(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteSge(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+
 };
 
 }

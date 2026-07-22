@@ -4,8 +4,6 @@
 #include <iomanip>
 #include <algorithm>
 
-#include "Cpu/Common/Assert.h"
-
 namespace Emulator
 {
 Ram::Ram(uint32_t maxSize, bool warnUninit)
@@ -185,6 +183,35 @@ void Ram::SetTraceEnabled(bool enabled, std::vector<AddrInterval> intervals)
 {
 	m_TraceEnabled = enabled;
 	m_TraceIntervals = std::move(intervals);
+}
+
+void Ram::FreeMemoryRegion(uint32_t address, uint32_t size)
+{
+	CheckBounds(address + size - 1);
+	for (uint32_t i = 0; i < size; ++i)
+	{
+		uint32_t addr = address + i;
+		if (m_clearStack)
+		{
+			WriteByteInternal(addr, 0);
+		}
+		if (m_WarnUninit)
+		{
+			ResetInitFlagInternal(addr);
+		}
+	}
+}
+
+void Ram::ResetInitFlagInternal(uint32_t address)
+{
+	uint32_t pageIndex = address / PageSize;
+	uint32_t offset = address % PageSize;
+
+	const auto it = m_Pages.find(pageIndex);
+	if (it != m_Pages.end())
+	{
+		it->second->initialized[offset] = false;
+	}
 }
 
 }
