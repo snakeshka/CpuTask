@@ -12,9 +12,7 @@
 #include "Cpu/Isa/InstructionSet.h"
 #include "Cpu/Isa/OperandKind.h"
 
-namespace Emulator
-{
-
+namespace Emulator {
 struct TickInterval
 {
 	uint32_t begin;
@@ -26,11 +24,11 @@ class Tracer
 public:
 	explicit Tracer(const bool enabled, std::vector<TickInterval> intervals = {})
 		: m_Enabled(enabled)
-		, m_Intervals(std::move(intervals))
+		  , m_Intervals(std::move(intervals))
 	{
 	}
 
-	inline void SaveStateBefore(const CpuState &state, const Cpu::Isa::Instruction &instruction)
+	inline void SaveStateBefore(const CpuState& state, const Cpu::Isa::Instruction& instruction)
 	{
 #if TRACING
 		if (!m_Enabled)
@@ -41,29 +39,25 @@ public:
 		m_Addr = state.InstructionPointer();
 		m_ValB = 0;
 		m_ValC = 0;
-		
+
 		auto formatOpt = Cpu::Isa::findInstructionByOpcode(instruction.opcode);
-		if (formatOpt.has_value())
-		{
-			if (formatOpt->operands.size() > 1 && formatOpt->operands[1] == Cpu::Isa::OperandKind::Register)
-			{
+		if (formatOpt.has_value()) {
+			if (formatOpt->operands.size() > 1 && formatOpt->operands[1] == Cpu::Isa::OperandKind::Register) {
 				m_ValB = state.GetRegister(instruction.b);
 			}
-			if (formatOpt->operands.size() > 2 && formatOpt->operands[2] == Cpu::Isa::OperandKind::Register)
-			{
+			if (formatOpt->operands.size() > 2 && formatOpt->operands[2] == Cpu::Isa::OperandKind::Register) {
 				m_ValC = state.GetRegister(instruction.c);
 			}
 		}
 #endif
 	}
 
-	inline void TraceStep(const CpuState &state, const Cpu::Isa::Instruction &instruction)
+	inline void TraceStep(const CpuState& state, const Cpu::Isa::Instruction& instruction)
 	{
 #if TRACING
 		if (!m_Enabled)
 			return;
-		if (IsTickAllowed(m_Tick))
-		{
+		if (IsTickAllowed(m_Tick)) {
 			PrintTraceLine(state, instruction);
 		}
 		m_Tick++;
@@ -83,17 +77,19 @@ private:
 	{
 		if (m_Intervals.empty())
 			return true;
-		auto it = std::lower_bound(m_Intervals.begin(), m_Intervals.end(), tick, [](const TickInterval &interval, uint32_t val)
-								   { return interval.end < val; });
-		if (it != m_Intervals.end() && tick >= it->begin)
-		{
+		auto it = std::lower_bound(m_Intervals.begin(),
+		                           m_Intervals.end(),
+		                           tick,
+		                           [](const TickInterval& interval, uint32_t val) {
+			                           return interval.end < val;
+		                           });
+		if (it != m_Intervals.end() && tick >= it->begin) {
 			return true;
 		}
 		return false;
 	}
 
-	void PrintTraceLine(const CpuState &state, const Cpu::Isa::Instruction &instruction) const;
+	void PrintTraceLine(const CpuState& state, const Cpu::Isa::Instruction& instruction) const;
 #endif
 };
-
 }

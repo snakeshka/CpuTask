@@ -7,17 +7,17 @@
 #include <vector>
 
 namespace Assembler {
-
-struct AssembleResult {
+struct AssembleResult
+{
 	Cpu::Bytecode Bytecode;
-    std::vector<Diagnostic> Diagnostics;
+	std::vector<Diagnostic> Diagnostics;
 
-    bool Success() const;
+	bool Success() const;
 };
 
-class Assembler {
+class Assembler
+{
 public:
-    AssembleResult Assemble(std::string_view source) const;
+	AssembleResult Assemble(std::string_view source) const;
 };
-
 }

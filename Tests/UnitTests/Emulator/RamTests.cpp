@@ -25,7 +25,7 @@ public:
 
 private:
 	std::stringstream m_Buffer;
-	std::streambuf *m_OldBuffer;
+	std::streambuf* m_OldBuffer;
 };
 
 // 1. Проверка чтения по умолчанию (неинициализированная память возвращает 0)

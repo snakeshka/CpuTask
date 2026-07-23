@@ -3,9 +3,7 @@
 #include "Cpu/Isa/Opcode.h"
 #include "Cpu/Common/Types.h"
 
-namespace Cpu::Isa
-{
-
+namespace Cpu::Isa {
 struct Instruction
 {
 	Opcode opcode{};
@@ -16,8 +14,7 @@ struct Instruction
 	Cpu::Word immediate16() const
 	{
 		return static_cast<Cpu::Word>(b) |
-				(static_cast<Cpu::Word>(c) << 8);
+			(static_cast<Cpu::Word>(c) << 8);
 	}
 };
-
 }

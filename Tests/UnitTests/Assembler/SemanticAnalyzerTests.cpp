@@ -10,9 +10,7 @@
 #include <string_view>
 #include <vector>
 
-namespace
-{
-
+namespace {
 struct AnalyzeResult
 {
 	Assembler::DiagnosticBag diagnostics;
@@ -25,15 +23,13 @@ AnalyzeResult analyzeSource(std::string_view source)
 
 	Assembler::Lexer lexer(source);
 	const auto tokens = lexer.Lex(result.diagnostics);
-	if (result.diagnostics.HasErrors())
-	{
+	if (result.diagnostics.HasErrors()) {
 		return result;
 	}
 
 	Assembler::Parser parser(tokens);
 	const auto parsed = parser.Parse(result.diagnostics);
-	if (result.diagnostics.HasErrors())
-	{
+	if (result.diagnostics.HasErrors()) {
 		return result;
 	}
 
@@ -41,7 +37,6 @@ AnalyzeResult analyzeSource(std::string_view source)
 	result.instructions = analyzer.Analyze(parsed, result.diagnostics);
 	return result;
 }
-
 }
 
 TEST(SemanticAnalyzerTests, BuildsLiInstruction)

@@ -2,8 +2,7 @@
 
 #include <string_view>
 
-namespace Emulator
-{
+namespace Emulator {
 enum class ExecutionStatus
 {
 	Success,
@@ -11,13 +10,11 @@ enum class ExecutionStatus
 	IllegalInstruction,
 	MemoryOutOfBounds,
 	StackOverflow
-
 };
 
 inline std::string_view ToString(ExecutionStatus status)
 {
-	switch (status)
-	{
+	switch (status) {
 		case ExecutionStatus::Success:
 			return "Success";
 		case ExecutionStatus::DivisionByZero:
@@ -31,5 +28,4 @@ inline std::string_view ToString(ExecutionStatus status)
 	}
 	return "unknown error";
 }
-
 }

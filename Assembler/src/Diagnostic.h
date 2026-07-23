@@ -4,46 +4,49 @@
 #include <string>
 
 namespace Assembler {
-
-enum class DiagnosticSeverity {
-    Error,
-    Warning,
-    Note
+enum class DiagnosticSeverity
+{
+	Error,
+	Warning,
+	Note
 };
 
-enum class DiagnosticCode {
-    UnknownCharacter,
-    InvalidNumberLiteral,
-    UnknownInstruction,
-    InvalidRegister,
-    InvalidImmediate,
-    ImmediateOutOfRange,
-    UnexpectedToken,
-    MissingOperand,
-    TooManyOperands,
-    WrongOperandType,
-    CannotOpenInputFile,
-    CannotWriteOutputFile,
-    InternalAssemblerError
+enum class DiagnosticCode
+{
+	UnknownCharacter,
+	InvalidNumberLiteral,
+	UnknownInstruction,
+	InvalidRegister,
+	InvalidImmediate,
+	ImmediateOutOfRange,
+	UnexpectedToken,
+	MissingOperand,
+	TooManyOperands,
+	WrongOperandType,
+	CannotOpenInputFile,
+	CannotWriteOutputFile,
+	InternalAssemblerError
 };
 
-struct SourceLocation {
-    size_t Line = 1;
-    size_t Column = 1;
+struct SourceLocation
+{
+	size_t Line = 1;
+	size_t Column = 1;
 };
 
-struct SourceRange {
-    SourceLocation Begin;
-    SourceLocation End;
+struct SourceRange
+{
+	SourceLocation Begin;
+	SourceLocation End;
 };
 
-struct Diagnostic {
-    DiagnosticSeverity Severity;
-    DiagnosticCode Code;
-    SourceRange Range;
-    std::string Message;
+struct Diagnostic
+{
+	DiagnosticSeverity Severity;
+	DiagnosticCode Code;
+	SourceRange Range;
+	std::string Message;
 };
 
 std::string_view ToString(DiagnosticSeverity severity);
-
 }

@@ -3,8 +3,8 @@
 #include <cstdint>
 
 namespace Cpu::Isa {
-
-enum class Opcode : uint8_t {
+enum class Opcode : uint8_t
+{
 	LI = 0x00,
 	LUI = 0x01,
 	ADD = 0x02,
@@ -42,5 +42,4 @@ enum class Opcode : uint8_t {
 	SLT = 0x44,
 	SGE = 0x45
 };
-
 }

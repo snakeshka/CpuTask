@@ -2,9 +2,8 @@
 
 #include "Cpu/Isa/InstructionSet.h"
 
-namespace Cpu::Isa
-{
-InstructionBytes encodeInstruction(const Instruction &instruction)
+namespace Cpu::Isa {
+InstructionBytes encodeInstruction(const Instruction& instruction)
 {
 	return {
 		static_cast<Byte>(instruction.opcode),
@@ -17,21 +16,19 @@ InstructionBytes encodeInstruction(const Instruction &instruction)
 std::optional<Instruction> decodeInstruction(InstructionBytes bytes)
 {
 	const auto opcode = static_cast<Opcode>(bytes[0]);
-	if (!findInstructionByOpcode(opcode).has_value())
-	{
+	if (!findInstructionByOpcode(opcode).has_value()) {
 		return std::nullopt;
 	}
 
 	return Instruction{opcode, bytes[1], bytes[2], bytes[3]};
 }
 
-Bytecode encodeProgram(const std::vector<Instruction> &instructions)
+Bytecode encodeProgram(const std::vector<Instruction>& instructions)
 {
 	Bytecode bytecode;
 	bytecode.reserve(instructions.size() * 4);
 
-	for (const auto &instruction : instructions)
-	{
+	for (const auto& instruction : instructions) {
 		const auto bytes = encodeInstruction(instruction);
 		bytecode.insert(bytecode.end(), bytes.begin(), bytes.end());
 	}
@@ -39,18 +36,16 @@ Bytecode encodeProgram(const std::vector<Instruction> &instructions)
 	return bytecode;
 }
 
-std::optional<std::vector<Instruction>> decodeProgram(const Bytecode &bytecode)
+std::optional<std::vector<Instruction>> decodeProgram(const Bytecode& bytecode)
 {
-	if (bytecode.size() % 4 != 0)
-	{
+	if (bytecode.size() % 4 != 0) {
 		return std::nullopt;
 	}
 
 	std::vector<Instruction> instructions;
 	instructions.reserve(bytecode.size() / 4);
 
-	for (size_t offset = 0; offset < bytecode.size(); offset += 4)
-	{
+	for (size_t offset = 0; offset < bytecode.size(); offset += 4) {
 		const InstructionBytes bytes = {
 			bytecode[offset],
 			bytecode[offset + 1],
@@ -59,8 +54,7 @@ std::optional<std::vector<Instruction>> decodeProgram(const Bytecode &bytecode)
 		};
 
 		auto instruction = decodeInstruction(bytes);
-		if (!instruction.has_value())
-		{
+		if (!instruction.has_value()) {
 			return std::nullopt;
 		}
 
@@ -69,5 +63,4 @@ std::optional<std::vector<Instruction>> decodeProgram(const Bytecode &bytecode)
 
 	return instructions;
 }
-
 }

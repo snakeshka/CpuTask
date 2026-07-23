@@ -4,36 +4,32 @@
 #include <iomanip>
 #include <algorithm>
 
-namespace Emulator
-{
+namespace Emulator {
 Ram::Ram(uint32_t maxSize, bool warnUninit)
 	: m_MaxSize(maxSize)
-	, m_WarnUninit(warnUninit)
+	  , m_WarnUninit(warnUninit)
 {
-	if (maxSize % 4 != 0)
-	{
+	if (maxSize % 4 != 0) {
 		throw std::runtime_error("RAM size must be a multiple of 4 bytes!");
 	}
 }
 
 void Ram::CheckBounds(uint32_t address) const
 {
-	if (address >= m_MaxSize)
-	{
+	if (address >= m_MaxSize) {
 		throw std::out_of_range("Internal error: unchecked RAM access at address 0x" + std::to_string(address));
 	}
 }
 
-bool Ram::IsValidRange(std::uint64_t address, uint32_t size) const
+bool Ram::IsValidRange(uint64_t address, uint32_t size) const
 {
 	return (address + size <= m_MaxSize);
 }
 
-Ram::Page &Ram::GetOrCreatePage(uint32_t pageIndex)
+Ram::Page& Ram::GetOrCreatePage(uint32_t pageIndex)
 {
-	auto &pagePtr = m_Pages[pageIndex];
-	if (!pagePtr)
-	{
+	auto& pagePtr = m_Pages[pageIndex];
+	if (!pagePtr) {
 		pagePtr = std::make_unique<Page>();
 	}
 	return *pagePtr;
@@ -43,7 +39,7 @@ void Ram::WriteByteInternal(uint32_t address, uint8_t value)
 {
 	uint32_t pageIndex = address / PageSize;
 	uint32_t offset = address % PageSize;
-	Page &page = GetOrCreatePage(pageIndex);
+	Page& page = GetOrCreatePage(pageIndex);
 	page.data[offset] = value;
 	page.initialized[offset] = true;
 }
@@ -54,21 +50,18 @@ uint8_t Ram::ReadByteInternal(uint32_t address, uint32_t tick)
 	uint32_t offset = address % PageSize;
 
 	const auto it = m_Pages.find(pageIndex);
-	if (it == m_Pages.end())
-	{
-		if (m_WarnUninit)
-		{
+	if (it == m_Pages.end()) {
+		if (m_WarnUninit) {
 			std::cerr << "[WARN] Tick " << std::dec << tick << ": Read uninitialized byte at RAM address 0x"
-					  << std::hex << address << "\n";
+				<< std::hex << address << "\n";
 		}
 		return 0;
 	}
 
-	Page &page = *it->second;
-	if (m_WarnUninit && !page.initialized[offset])
-	{
+	Page& page = *it->second;
+	if (m_WarnUninit && !page.initialized[offset]) {
 		std::cerr << "[WARN] Tick " << std::dec << tick << ": Read uninitialized byte at RAM address 0x"
-				  << std::hex << address << "\n";
+			<< std::hex << address << "\n";
 	}
 
 	return page.data[offset];
@@ -91,8 +84,7 @@ uint32_t Ram::ReadWord(uint32_t address, uint32_t tick)
 {
 	CheckBounds(address + 3);
 	uint32_t val = 0;
-	for (uint32_t i = 0; i < 4; ++i)
-	{
+	for (uint32_t i = 0; i < 4; ++i) {
 		val |= (static_cast<uint32_t>(ReadByteInternal(address + i, tick)) << (i * 8));
 	}
 	return val;
@@ -100,10 +92,9 @@ uint32_t Ram::ReadWord(uint32_t address, uint32_t tick)
 
 void Ram::LogTrace(uint32_t cellAddr, uint32_t oldVal, uint32_t newVal, uint32_t tick) const
 {
-	if (tick != 0 && m_TraceEnabled && IsAddrTraceAllowed(cellAddr))
-	{
+	if (tick != 0 && m_TraceEnabled && IsAddrTraceAllowed(cellAddr)) {
 		std::cout << std::dec << tick << " RAM [0x" << std::hex << std::nouppercase << std::setfill('0') << std::setw(8) << cellAddr
-				  << "] wr 0x" << std::setw(8) << oldVal << " -> 0x" << std::setw(8) << newVal << "\n";
+			<< "] wr 0x" << std::setw(8) << oldVal << " -> 0x" << std::setw(8) << newVal << "\n";
 	}
 }
 
@@ -136,8 +127,7 @@ void Ram::WriteHalfword(uint32_t address, uint16_t value, uint32_t tick)
 	uint32_t newCell1 = (cell0Addr != cell1Addr) ? ReadWord(cell1Addr, tick) : 0;
 
 	LogTrace(cell0Addr, oldCell0, newCell0, tick);
-	if (cell0Addr != cell1Addr)
-	{
+	if (cell0Addr != cell1Addr) {
 		LogTrace(cell1Addr, oldCell1, newCell1, tick);
 	}
 }
@@ -152,8 +142,7 @@ void Ram::WriteWord(uint32_t address, uint32_t value, uint32_t tick)
 	uint32_t oldCell0 = ReadWord(cell0Addr, tick);
 	uint32_t oldCell1 = (cell0Addr != cell1Addr) ? ReadWord(cell1Addr, tick) : 0;
 
-	for (uint32_t i = 0; i < 4; ++i)
-	{
+	for (uint32_t i = 0; i < 4; ++i) {
 		WriteByteInternal(address + i, static_cast<uint8_t>((value >> (i * 8)) & 0xFF));
 	}
 
@@ -161,8 +150,7 @@ void Ram::WriteWord(uint32_t address, uint32_t value, uint32_t tick)
 	uint32_t newCell1 = (cell0Addr != cell1Addr) ? ReadWord(cell1Addr, tick) : 0;
 
 	LogTrace(cell0Addr, oldCell0, newCell0, tick);
-	if (cell0Addr != cell1Addr)
-	{
+	if (cell0Addr != cell1Addr) {
 		LogTrace(cell1Addr, oldCell1, newCell1, tick);
 	}
 }
@@ -171,8 +159,7 @@ bool Ram::IsAddrTraceAllowed(uint32_t address) const
 {
 	if (m_TraceIntervals.empty())
 		return true;
-	for (const auto &interval : m_TraceIntervals)
-	{
+	for (const auto& interval : m_TraceIntervals) {
 		if (address >= interval.begin && address <= interval.end)
 			return true;
 	}
@@ -188,15 +175,12 @@ void Ram::SetTraceEnabled(bool enabled, std::vector<AddrInterval> intervals)
 void Ram::FreeMemoryRegion(uint32_t address, uint32_t size)
 {
 	CheckBounds(address + size - 1);
-	for (uint32_t i = 0; i < size; ++i)
-	{
+	for (uint32_t i = 0; i < size; ++i) {
 		uint32_t addr = address + i;
-		if (m_clearStack)
-		{
+		if (m_clearStack) {
 			WriteByteInternal(addr, 0);
 		}
-		if (m_WarnUninit)
-		{
+		if (m_WarnUninit) {
 			ResetInitFlagInternal(addr);
 		}
 	}
@@ -208,10 +192,8 @@ void Ram::ResetInitFlagInternal(uint32_t address)
 	uint32_t offset = address % PageSize;
 
 	const auto it = m_Pages.find(pageIndex);
-	if (it != m_Pages.end())
-	{
+	if (it != m_Pages.end()) {
 		it->second->initialized[offset] = false;
 	}
 }
-
 }

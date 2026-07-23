@@ -7,16 +7,14 @@
 #include <optional>
 #include <vector>
 
-namespace Cpu::Isa
-{
+namespace Cpu::Isa {
 using InstructionBytes = std::array<Byte, 4>;
 
-InstructionBytes encodeInstruction(const Instruction &instruction);
+InstructionBytes encodeInstruction(const Instruction& instruction);
 
 std::optional<Instruction> decodeInstruction(InstructionBytes bytes);
 
-Bytecode encodeProgram(const std::vector<Instruction> &instructions);
+Bytecode encodeProgram(const std::vector<Instruction>& instructions);
 
-std::optional<std::vector<Instruction>> decodeProgram(const Bytecode &bytecode);
-
+std::optional<std::vector<Instruction>> decodeProgram(const Bytecode& bytecode);
 }

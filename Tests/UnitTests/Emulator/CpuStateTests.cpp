@@ -6,8 +6,7 @@ TEST(CpuStateTests, InitializesRegistersToZero)
 {
 	const Emulator::CpuState state;
 
-	for (size_t i = 0; i < 16; ++i)
-	{
+	for (size_t i = 0; i < 16; ++i) {
 		EXPECT_EQ(state.GetRegister(i), 0u);
 	}
 }

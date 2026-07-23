@@ -7,8 +7,7 @@
 
 #include <string>
 
-namespace Emulator
-{
+namespace Emulator {
 struct EmulatorResult
 {
 	CpuState State;
@@ -20,7 +19,7 @@ class Emulator
 {
 public:
 	EmulatorResult Run(
-		const Cpu::Bytecode &bytecode,
+		const Cpu::Bytecode& bytecode,
 		bool traceEnabled = false,
 		std::vector<TickInterval> traceIntervals = {},
 		uint32_t ramSize = 65536,
@@ -29,5 +28,4 @@ public:
 		bool ramTraceEnabled = false,
 		bool clearStack = false) const;
 };
-
 }

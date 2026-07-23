@@ -6,22 +6,23 @@
 #include <vector>
 
 namespace Assembler {
-
-enum class ParsedOperandKind {
-    Identifier,
-    Number
+enum class ParsedOperandKind
+{
+	Identifier,
+	Number
 };
 
-struct ParsedOperand {
-    ParsedOperandKind Kind{};
-    std::string Text;
-    SourceRange Range;
+struct ParsedOperand
+{
+	ParsedOperandKind Kind{};
+	std::string Text;
+	SourceRange Range;
 };
 
-struct ParsedInstruction {
-    std::string Mnemonic;
+struct ParsedInstruction
+{
+	std::string Mnemonic;
 	std::vector<ParsedOperand> Operands;
-    SourceRange Range;
+	SourceRange Range;
 };
-
 }

@@ -6,8 +6,7 @@
 #include <string_view>
 #include <vector>
 
-namespace
-{
+namespace {
 struct ParseResult
 {
 	Assembler::DiagnosticBag diagnostics;
@@ -22,8 +21,7 @@ ParseResult parseSource(std::string_view source)
 	Assembler::Lexer lexer(source);
 	result.tokens = lexer.Lex(result.diagnostics);
 
-	if (result.diagnostics.HasErrors())
-	{
+	if (result.diagnostics.HasErrors()) {
 		return result;
 	}
 
@@ -33,19 +31,16 @@ ParseResult parseSource(std::string_view source)
 	return result;
 }
 
-bool hasCode(const Assembler::DiagnosticBag &diagnostics, Assembler::DiagnosticCode code)
+bool hasCode(const Assembler::DiagnosticBag& diagnostics, Assembler::DiagnosticCode code)
 {
-	for (const auto &diagnostic : diagnostics.diagnostics())
-	{
-		if (diagnostic.Code == code)
-		{
+	for (const auto& diagnostic : diagnostics.diagnostics()) {
+		if (diagnostic.Code == code) {
 			return true;
 		}
 	}
 
 	return false;
 }
-
 }
 
 TEST(ParserTests, ParsesLiInstruction)
@@ -55,7 +50,7 @@ TEST(ParserTests, ParsesLiInstruction)
 	ASSERT_FALSE(result.diagnostics.HasErrors());
 	ASSERT_EQ(result.instructions.size(), 1);
 
-	const auto &instruction = result.instructions[0];
+	const auto& instruction = result.instructions[0];
 
 	EXPECT_EQ(instruction.Mnemonic, "LI");
 
@@ -75,7 +70,7 @@ TEST(ParserTests, ParsesAddInstruction)
 	ASSERT_FALSE(result.diagnostics.HasErrors());
 	ASSERT_EQ(result.instructions.size(), 1);
 
-	const auto &instruction = result.instructions[0];
+	const auto& instruction = result.instructions[0];
 
 	EXPECT_EQ(instruction.Mnemonic, "ADD");
 
@@ -159,7 +154,7 @@ TEST(ParserTests, KeepsSourceLocationForMnemonic)
 	ASSERT_FALSE(result.diagnostics.HasErrors());
 	ASSERT_EQ(result.instructions.size(), 1);
 
-	const auto &instruction = result.instructions[0];
+	const auto& instruction = result.instructions[0];
 
 	EXPECT_EQ(instruction.Mnemonic, "ADD");
 	EXPECT_EQ(instruction.Range.Begin.Line, 2);
@@ -173,7 +168,7 @@ TEST(ParserTests, KeepsSourceLocationForOperands)
 	ASSERT_FALSE(result.diagnostics.HasErrors());
 	ASSERT_EQ(result.instructions.size(), 1);
 
-	const auto &instruction = result.instructions[0];
+	const auto& instruction = result.instructions[0];
 
 	ASSERT_EQ(instruction.Operands.size(), 3);
 

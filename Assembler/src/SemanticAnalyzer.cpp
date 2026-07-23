@@ -8,220 +8,212 @@
 
 namespace Assembler {
 namespace {
+	std::string operandKindName(Cpu::Isa::OperandKind kind)
+	{
+		switch (kind) {
+			case Cpu::Isa::OperandKind::Register:
+				return "register";
+			case Cpu::Isa::OperandKind::SystemRegister:
+				return "system register";
+			case Cpu::Isa::OperandKind::Immediate16:
+				return "16-bit immediate";
+			case Cpu::Isa::OperandKind::UpperImmediate16:
+				return "16-bit upper immediate";
+		}
 
-std::string operandKindName(Cpu::Isa::OperandKind kind)
-{
-    switch (kind) {
-    case Cpu::Isa::OperandKind::Register:
-        return "register";
-    case Cpu::Isa::OperandKind::SystemRegister:
-        return "system register";
-    case Cpu::Isa::OperandKind::Immediate16:
-        return "16-bit immediate";
-	case Cpu::Isa::OperandKind::UpperImmediate16:
-		return "16-bit upper immediate";
-    }
-
-    return "operand";
-}
-
+		return "operand";
+	}
 }
 
 std::vector<Cpu::Isa::Instruction> SemanticAnalyzer::Analyze(
-    const std::vector<ParsedInstruction>& parsedInstructions,
-    DiagnosticBag& diagnostics) const
+	const std::vector<ParsedInstruction>& parsedInstructions,
+	DiagnosticBag& diagnostics) const
 {
-    std::vector<Cpu::Isa::Instruction> instructions;
+	std::vector<Cpu::Isa::Instruction> instructions;
 
-    for (const auto& parsed : parsedInstructions) {
-        const auto format = Cpu::Isa::findInstructionByMnemonic(parsed.Mnemonic);
-        if (!format.has_value()) {
-            diagnostics.Add(Diagnostic{
-                DiagnosticSeverity::Error,
-                DiagnosticCode::UnknownInstruction,
-                parsed.Range,
-                "unknown instruction \"" + parsed.Mnemonic + "\"",
-            });
-            continue;
-        }
+	for (const auto& parsed : parsedInstructions) {
+		const auto format = Cpu::Isa::findInstructionByMnemonic(parsed.Mnemonic);
+		if (!format.has_value()) {
+			diagnostics.Add(Diagnostic{
+				DiagnosticSeverity::Error,
+				DiagnosticCode::UnknownInstruction,
+				parsed.Range,
+				"unknown instruction \"" + parsed.Mnemonic + "\"",
+			});
+			continue;
+		}
 
-        if (parsed.Operands.size() < format->operands.size()) {
-            diagnostics.Add(Diagnostic{
-                DiagnosticSeverity::Error,
-                DiagnosticCode::MissingOperand,
-                parsed.Range,
-                "instruction \"" + parsed.Mnemonic + "\" expects " + std::to_string(format->operands.size())
-                    + " operands",
-            });
-            continue;
-        }
+		if (parsed.Operands.size() < format->operands.size()) {
+			diagnostics.Add(Diagnostic{
+				DiagnosticSeverity::Error,
+				DiagnosticCode::MissingOperand,
+				parsed.Range,
+				"instruction \"" + parsed.Mnemonic + "\" expects " + std::to_string(format->operands.size())
+				+ " operands",
+			});
+			continue;
+		}
 
-        if (parsed.Operands.size() > format->operands.size()) {
-            diagnostics.Add(Diagnostic{
-                DiagnosticSeverity::Error,
-                DiagnosticCode::TooManyOperands,
-                parsed.Operands[format->operands.size()].Range,
-                "too many operands for instruction \"" + parsed.Mnemonic + "\"",
-            });
-            continue;
-        }
+		if (parsed.Operands.size() > format->operands.size()) {
+			diagnostics.Add(Diagnostic{
+				DiagnosticSeverity::Error,
+				DiagnosticCode::TooManyOperands,
+				parsed.Operands[format->operands.size()].Range,
+				"too many operands for instruction \"" + parsed.Mnemonic + "\"",
+			});
+			continue;
+		}
 
-        Cpu::Isa::Instruction instruction;
-        instruction.opcode = format->opcode;
-        bool ok = true;
+		Cpu::Isa::Instruction instruction;
+		instruction.opcode = format->opcode;
+		bool ok = true;
 
-        for (size_t index = 0; index < format->operands.size(); ++index) {
-            const auto expected = format->operands[index];
-            const auto& operand = parsed.Operands[index];
+		for (size_t index = 0; index < format->operands.size(); ++index) {
+			const auto expected = format->operands[index];
+			const auto& operand = parsed.Operands[index];
 
-            if (expected == Cpu::Isa::OperandKind::Register) {
-                if (operand.Kind != ParsedOperandKind::Identifier) {
-                    diagnostics.Add(Diagnostic{
-                        DiagnosticSeverity::Error,
-                        DiagnosticCode::WrongOperandType,
-                        operand.Range,
-                        "expected " + operandKindName(expected),
-                    });
-                    ok = false;
-                    continue;
-                }
+			if (expected == Cpu::Isa::OperandKind::Register) {
+				if (operand.Kind != ParsedOperandKind::Identifier) {
+					diagnostics.Add(Diagnostic{
+						DiagnosticSeverity::Error,
+						DiagnosticCode::WrongOperandType,
+						operand.Range,
+						"expected " + operandKindName(expected),
+					});
+					ok = false;
+					continue;
+				}
 
-                const auto reg = Cpu::Isa::parseRegister(operand.Text);
-                if (!reg.has_value()) {
-                    diagnostics.Add(Diagnostic{
-                        DiagnosticSeverity::Error,
-                        DiagnosticCode::InvalidRegister,
-                        operand.Range,
-                        "invalid register \"" + operand.Text + "\"",
-                    });
-                    ok = false;
-                    continue;
-                }
+				const auto reg = Cpu::Isa::parseRegister(operand.Text);
+				if (!reg.has_value()) {
+					diagnostics.Add(Diagnostic{
+						DiagnosticSeverity::Error,
+						DiagnosticCode::InvalidRegister,
+						operand.Range,
+						"invalid register \"" + operand.Text + "\"",
+					});
+					ok = false;
+					continue;
+				}
 
-                if (index == 0) {
-                    instruction.a = *reg;
-                } else if (index == 1) {
-                    instruction.b = *reg;
-                } else if (index == 2) {
-                    instruction.c = *reg;
-                }
-            } else if (expected == Cpu::Isa::OperandKind::SystemRegister) {
-                if (operand.Kind != ParsedOperandKind::Identifier) {
-                    diagnostics.Add(Diagnostic{
-                        DiagnosticSeverity::Error,
-                        DiagnosticCode::WrongOperandType,
-                        operand.Range,
-                        "expected system register",
-                        });
-                    ok = false;
-                    continue;
-                }
-                uint8_t scrIndex = 0;
-                if (operand.Text == "IP") {
-                    scrIndex = 0;
-                }
-                else if (operand.Text == "SP_TOP") {
-                    scrIndex = 1;
-                }
-                else if (operand.Text == "SP_SIZE") {
-                    scrIndex = 2;
-                }
-                else {
-                    diagnostics.Add(Diagnostic{
-                        DiagnosticSeverity::Error,
-                        DiagnosticCode::InvalidRegister,
-                        operand.Range,
-                        "invalid system register \"" + operand.Text + "\"",
-                        });
-                    ok = false;
-                    continue;
-                }
-                if (index == 0) {
-                    instruction.a = scrIndex;
-                }
-                else if (index == 1) {
-                    instruction.b = scrIndex;
-                }
-                else if (index == 2) {
-                    instruction.c = scrIndex;
-                }
-            } else if ( expected == Cpu::Isa::OperandKind::Immediate16 ||
-						expected == Cpu::Isa::OperandKind::UpperImmediate16) {
-                if (operand.Kind != ParsedOperandKind::Number) {
-                    diagnostics.Add(Diagnostic{
-                        DiagnosticSeverity::Error,
-                        DiagnosticCode::WrongOperandType,
-                        operand.Range,
-                        "expected " + operandKindName(expected),
-                    });
-                    ok = false;
-                    continue;
-                }
+				if (index == 0) {
+					instruction.a = *reg;
+				} else if (index == 1) {
+					instruction.b = *reg;
+				} else if (index == 2) {
+					instruction.c = *reg;
+				}
+			} else if (expected == Cpu::Isa::OperandKind::SystemRegister) {
+				if (operand.Kind != ParsedOperandKind::Identifier) {
+					diagnostics.Add(Diagnostic{
+						DiagnosticSeverity::Error,
+						DiagnosticCode::WrongOperandType,
+						operand.Range,
+						"expected system register",
+					});
+					ok = false;
+					continue;
+				}
+				uint8_t scrIndex = 0;
+				if (operand.Text == "IP") {
+					scrIndex = 0;
+				} else if (operand.Text == "SP_TOP") {
+					scrIndex = 1;
+				} else if (operand.Text == "SP_SIZE") {
+					scrIndex = 2;
+				} else {
+					diagnostics.Add(Diagnostic{
+						DiagnosticSeverity::Error,
+						DiagnosticCode::InvalidRegister,
+						operand.Range,
+						"invalid system register \"" + operand.Text + "\"",
+					});
+					ok = false;
+					continue;
+				}
+				if (index == 0) {
+					instruction.a = scrIndex;
+				} else if (index == 1) {
+					instruction.b = scrIndex;
+				} else if (index == 2) {
+					instruction.c = scrIndex;
+				}
+			} else if (expected == Cpu::Isa::OperandKind::Immediate16 ||
+				expected == Cpu::Isa::OperandKind::UpperImmediate16) {
+				if (operand.Kind != ParsedOperandKind::Number) {
+					diagnostics.Add(Diagnostic{
+						DiagnosticSeverity::Error,
+						DiagnosticCode::WrongOperandType,
+						operand.Range,
+						"expected " + operandKindName(expected),
+					});
+					ok = false;
+					continue;
+				}
 
-                uint16_t immediate = 0;
-                if (!parseImmediate16(operand, immediate, diagnostics)) {
-                    ok = false;
-                    continue;
-                }
+				uint16_t immediate = 0;
+				if (!parseImmediate16(operand, immediate, diagnostics)) {
+					ok = false;
+					continue;
+				}
 
-                instruction.b = static_cast<uint8_t>(immediate & 0x00FF);
-                instruction.c = static_cast<uint8_t>((immediate >> 8) & 0x00FF);
-            }
-        }
+				instruction.b = static_cast<uint8_t>(immediate & 0x00FF);
+				instruction.c = static_cast<uint8_t>((immediate >> 8) & 0x00FF);
+			}
+		}
 
-        if (ok) {
-            instructions.push_back(instruction);
-        }
-    }
+		if (ok) {
+			instructions.push_back(instruction);
+		}
+	}
 
-    return instructions;
+	return instructions;
 }
 
 bool SemanticAnalyzer::parseImmediate16(const ParsedOperand& operand, uint16_t& value, DiagnosticBag& diagnostics)
 {
-    long long parsed = 0;
-    int base = 10;
-    std::string_view text = operand.Text;
+	long long parsed = 0;
+	int base = 10;
+	std::string_view text = operand.Text;
 	bool negative = false;
 	if (text.starts_with('-')) {
 		negative = true;
 		text.remove_prefix(1);
 	}
-    if (text.size() > 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X')) {
-        text.remove_prefix(2);
-        base = 16;
-    }
+	if (text.size() > 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X')) {
+		text.remove_prefix(2);
+		base = 16;
+	}
 
-    const auto* begin = text.data();
-    const auto* end = begin + text.size();
-    const auto result = std::from_chars(begin, end, parsed, base);
+	const auto* begin = text.data();
+	const auto* end = begin + text.size();
+	const auto result = std::from_chars(begin, end, parsed, base);
 
-    if (result.ec != std::errc{} || result.ptr != end) {
-        diagnostics.Add(Diagnostic{
-            DiagnosticSeverity::Error,
-            DiagnosticCode::InvalidImmediate,
-            operand.Range,
-            "invalid immediate value \"" + operand.Text + "\"",
-        });
-        return false;
-    }
+	if (result.ec != std::errc{} || result.ptr != end) {
+		diagnostics.Add(Diagnostic{
+			DiagnosticSeverity::Error,
+			DiagnosticCode::InvalidImmediate,
+			operand.Range,
+			"invalid immediate value \"" + operand.Text + "\"",
+		});
+		return false;
+	}
 
-    if (negative) {
+	if (negative) {
 		parsed = -parsed;
 	}
 
-    if (parsed < -0x8000LL || parsed > 0xFFFFLL) {
-        diagnostics.Add(Diagnostic{
-            DiagnosticSeverity::Error,
-            DiagnosticCode::ImmediateOutOfRange,
-            operand.Range,
-            "immediate value " + operand.Text + " is too large for 16-bit value",
-        });
-        return false;
-    }
+	if (parsed < -0x8000LL || parsed > 0xFFFFLL) {
+		diagnostics.Add(Diagnostic{
+			DiagnosticSeverity::Error,
+			DiagnosticCode::ImmediateOutOfRange,
+			operand.Range,
+			"immediate value " + operand.Text + " is too large for 16-bit value",
+		});
+		return false;
+	}
 
-    value = static_cast<uint16_t>(parsed);
-    return true;
+	value = static_cast<uint16_t>(parsed);
+	return true;
 }
-
 }

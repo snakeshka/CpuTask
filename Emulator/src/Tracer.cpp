@@ -4,9 +4,8 @@
 #include <iomanip>
 
 #if TRACING
-namespace Emulator
-{
-void Tracer::PrintTraceLine(const CpuState &state, const Cpu::Isa::Instruction &instruction) const
+namespace Emulator {
+void Tracer::PrintTraceLine(const CpuState& state, const Cpu::Isa::Instruction& instruction) const
 {
 	auto formatOpt = Cpu::Isa::findInstructionByOpcode(instruction.opcode);
 	if (!formatOpt.has_value())
@@ -21,34 +20,24 @@ void Tracer::PrintTraceLine(const CpuState &state, const Cpu::Isa::Instruction &
 
 	std::cout << "0x" << std::setfill('0') << std::setw(8) << std::hex << encoding << " " << formatOpt->mnemonic;
 
-	for (size_t i = 0; i < formatOpt->operands.size(); ++i)
-	{
+	for (size_t i = 0; i < formatOpt->operands.size(); ++i) {
 		auto kind = formatOpt->operands[i];
-		if (kind == Cpu::Isa::OperandKind::Register)
-		{
-			if (i == 0)
-			{
+		if (kind == Cpu::Isa::OperandKind::Register) {
+			if (i == 0) {
 				std::cout << " R" << std::dec << static_cast<int>(instruction.a)
-						  << " (0x" << std::hex << state.GetRegister(instruction.a) << ")";
-			}
-			else if (i == 1)
-			{
+					<< " (0x" << std::hex << state.GetRegister(instruction.a) << ")";
+			} else if (i == 1) {
 				std::cout << " R" << std::dec << static_cast<int>(instruction.b)
-						  << " (0x" << std::hex << m_ValB << ")";
-			}
-			else if (i == 2)
-			{
+					<< " (0x" << std::hex << m_ValB << ")";
+			} else if (i == 2) {
 				std::cout << " R" << std::dec << static_cast<int>(instruction.c)
-						  << " (0x" << std::hex << m_ValC << ")";
+					<< " (0x" << std::hex << m_ValC << ")";
 			}
-		}
-		else if (kind == Cpu::Isa::OperandKind::Immediate16 || kind == Cpu::Isa::OperandKind::UpperImmediate16)
-		{
+		} else if (kind == Cpu::Isa::OperandKind::Immediate16 || kind == Cpu::Isa::OperandKind::UpperImmediate16) {
 			std::cout << " imm (0x" << std::hex << instruction.immediate16() << ")";
 		}
 	}
 	std::cout << "\n";
 }
-
 }
 #endif

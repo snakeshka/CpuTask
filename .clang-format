@@ -39,7 +39,7 @@ AllowShortFunctionsOnASingleLine: Empty
 AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: false
 
-NamespaceIndentation: All
+NamespaceIndentation: Inner
 FixNamespaceComments: false
 
 PointerAlignment: Left

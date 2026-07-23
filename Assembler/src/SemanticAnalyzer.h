@@ -7,15 +7,14 @@
 #include <vector>
 
 namespace Assembler {
-
-class SemanticAnalyzer {
+class SemanticAnalyzer
+{
 public:
-    std::vector<Cpu::Isa::Instruction> Analyze(
-        const std::vector<ParsedInstruction>& parsedInstructions,
-        DiagnosticBag& diagnostics) const;
+	std::vector<Cpu::Isa::Instruction> Analyze(
+		const std::vector<ParsedInstruction>& parsedInstructions,
+		DiagnosticBag& diagnostics) const;
 
 private:
-    static bool parseImmediate16(const ParsedOperand& operand, uint16_t& value, DiagnosticBag& diagnostics);
+	static bool parseImmediate16(const ParsedOperand& operand, uint16_t& value, DiagnosticBag& diagnostics);
 };
-
 }

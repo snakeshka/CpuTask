@@ -7,8 +7,7 @@
 #include <array>
 #include <string_view>
 
-namespace Cpu::Isa
-{
+namespace Cpu::Isa {
 inline constexpr std::array<OperandKind, 2> RIOperands = {
 	OperandKind::Register,
 	OperandKind::Immediate16,
@@ -93,10 +92,8 @@ inline std::span<const InstructionFormat> instructionSet()
 
 constexpr std::optional<InstructionFormat> findInstructionByMnemonic(std::string_view mnemonic)
 {
-	for (const auto &instruction : Instructions)
-	{
-		if (instruction.mnemonic == mnemonic)
-		{
+	for (const auto& instruction : Instructions) {
+		if (instruction.mnemonic == mnemonic) {
 			return instruction;
 		}
 	}
@@ -106,15 +103,12 @@ constexpr std::optional<InstructionFormat> findInstructionByMnemonic(std::string
 
 constexpr std::optional<InstructionFormat> findInstructionByOpcode(Opcode opcode)
 {
-	for (const auto &instruction : Instructions)
-	{
-		if (instruction.opcode == opcode)
-		{
+	for (const auto& instruction : Instructions) {
+		if (instruction.opcode == opcode) {
 			return instruction;
 		}
 	}
 
 	return std::nullopt;
 }
-
 }

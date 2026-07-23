@@ -6,10 +6,9 @@
 #include <string>
 
 namespace Assembler {
-
-class DiagnosticFormatter {
+class DiagnosticFormatter
+{
 public:
-    std::string format(const SourceFile& sourceFile, const Diagnostic& diagnostic) const;
+	std::string format(const SourceFile& sourceFile, const Diagnostic& diagnostic) const;
 };
-
 }

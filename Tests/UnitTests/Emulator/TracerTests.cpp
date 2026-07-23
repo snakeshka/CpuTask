@@ -7,8 +7,7 @@
 #include <sstream>
 #include <iostream>
 
-namespace
-{
+namespace {
 // ��������������� ����� ��� ��������� stdout �� ����� ����� (RAII �������)
 class RedirectStdout
 {
@@ -30,9 +29,8 @@ public:
 
 private:
 	std::stringstream m_LocalStream;
-	std::streambuf *m_OldBuffer;
+	std::streambuf* m_OldBuffer;
 };
-
 }
 
 // ��������� ������������ ����������� �������� �������� (ADD)

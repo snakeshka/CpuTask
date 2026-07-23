@@ -2,21 +2,17 @@
 
 #include <gtest/gtest.h>
 
-namespace
+namespace {
+bool hasCode(const Assembler::DiagnosticBag& diagnostics, Assembler::DiagnosticCode code)
 {
-bool hasCode(const Assembler::DiagnosticBag &diagnostics, Assembler::DiagnosticCode code)
-{
-	for (const auto &diagnostic : diagnostics.diagnostics())
-	{
-		if (diagnostic.Code == code)
-		{
+	for (const auto& diagnostic : diagnostics.diagnostics()) {
+		if (diagnostic.Code == code) {
 			return true;
 		}
 	}
 
 	return false;
 }
-
 }
 
 TEST(LexerTests, LexesLiInstruction)

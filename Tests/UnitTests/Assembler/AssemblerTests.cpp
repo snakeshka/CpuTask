@@ -4,21 +4,17 @@
 
 #include <gtest/gtest.h>
 
-namespace
+namespace {
+bool hasCode(const Assembler::AssembleResult& result, Assembler::DiagnosticCode code)
 {
-bool hasCode(const Assembler::AssembleResult &result, Assembler::DiagnosticCode code)
-{
-	for (const auto &diagnostic : result.Diagnostics)
-	{
-		if (diagnostic.Code == code)
-		{
+	for (const auto& diagnostic : result.Diagnostics) {
+		if (diagnostic.Code == code) {
 			return true;
 		}
 	}
 
 	return false;
 }
-
 }
 
 TEST(AssemblerTests, AssemblesSimpleProgram)

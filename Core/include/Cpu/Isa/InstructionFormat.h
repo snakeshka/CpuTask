@@ -6,13 +6,11 @@
 #include <span>
 #include <string_view>
 
-namespace Cpu::Isa
-{
+namespace Cpu::Isa {
 struct InstructionFormat
 {
 	std::string_view mnemonic;
 	Opcode opcode;
 	std::span<const OperandKind> operands;
 };
-
 }

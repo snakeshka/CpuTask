@@ -7,41 +7,39 @@
 #include "Cpu/Isa/Codec.h"
 
 namespace Assembler {
-
 bool AssembleResult::Success() const
 {
-    for (const auto& diagnostic : Diagnostics) {
-        if (diagnostic.Severity == DiagnosticSeverity::Error) {
-            return false;
-        }
-    }
+	for (const auto& diagnostic : Diagnostics) {
+		if (diagnostic.Severity == DiagnosticSeverity::Error) {
+			return false;
+		}
+	}
 
-    return true;
+	return true;
 }
 
 AssembleResult Assembler::Assemble(std::string_view source) const
 {
-    DiagnosticBag diagnostics;
+	DiagnosticBag diagnostics;
 
-    Lexer lexer(source);
-    auto tokens = lexer.Lex(diagnostics);
-    if (diagnostics.HasErrors()) {
-        return AssembleResult{{}, diagnostics.diagnostics()};
-    }
+	Lexer lexer(source);
+	auto tokens = lexer.Lex(diagnostics);
+	if (diagnostics.HasErrors()) {
+		return AssembleResult{{}, diagnostics.diagnostics()};
+	}
 
-    Parser parser(tokens);
-    auto parsedInstructions = parser.Parse(diagnostics);
-    if (diagnostics.HasErrors()) {
-        return AssembleResult{{}, diagnostics.diagnostics()};
-    }
+	Parser parser(tokens);
+	auto parsedInstructions = parser.Parse(diagnostics);
+	if (diagnostics.HasErrors()) {
+		return AssembleResult{{}, diagnostics.diagnostics()};
+	}
 
-    SemanticAnalyzer analyzer;
-    auto instructions = analyzer.Analyze(parsedInstructions, diagnostics);
-    if (diagnostics.HasErrors()) {
-        return AssembleResult{{}, diagnostics.diagnostics()};
-    }
+	SemanticAnalyzer analyzer;
+	auto instructions = analyzer.Analyze(parsedInstructions, diagnostics);
+	if (diagnostics.HasErrors()) {
+		return AssembleResult{{}, diagnostics.diagnostics()};
+	}
 
-    return AssembleResult{Cpu::Isa::encodeProgram(instructions), diagnostics.diagnostics()};
+	return AssembleResult{Cpu::Isa::encodeProgram(instructions), diagnostics.diagnostics()};
 }
-
 }

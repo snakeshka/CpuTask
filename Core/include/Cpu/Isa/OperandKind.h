@@ -2,8 +2,7 @@
 
 #include <cstdint>
 
-namespace Cpu::Isa
-{
+namespace Cpu::Isa {
 enum class OperandKind : uint8_t
 {
 	Register,
@@ -11,5 +10,4 @@ enum class OperandKind : uint8_t
 	Immediate16,
 	UpperImmediate16
 };
-
 }

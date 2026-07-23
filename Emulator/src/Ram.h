@@ -6,8 +6,7 @@
 #include <memory>
 #include <string>
 
-namespace Emulator
-{
+namespace Emulator {
 struct AddrInterval
 {
 	uint32_t begin;
@@ -21,7 +20,7 @@ public:
 
 	Ram(uint32_t maxSize, bool warnUninit = false);
 
-	bool IsValidRange(std::uint64_t address, uint32_t size) const;
+	bool IsValidRange(uint64_t address, uint32_t size) const;
 	void SetTraceEnabled(bool enabled, std::vector<AddrInterval> intervals = {});
 	void FreeMemoryRegion(uint32_t address, uint32_t size);
 	void ResetInitFlagInternal(uint32_t address);
@@ -50,7 +49,7 @@ private:
 
 	std::unordered_map<uint32_t, std::unique_ptr<Page>> m_Pages;
 
-	Page &GetOrCreatePage(uint32_t pageIndex);
+	Page& GetOrCreatePage(uint32_t pageIndex);
 	void CheckBounds(uint32_t address) const;
 	bool IsAddrTraceAllowed(uint32_t address) const;
 
@@ -60,5 +59,4 @@ private:
 
 	void LogTrace(uint32_t cellAddr, uint32_t oldVal, uint32_t newVal, uint32_t tick) const;
 };
-
 }
