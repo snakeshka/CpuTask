@@ -5,13 +5,14 @@
 #include "Cpu/Isa/Instruction.h"
 
 #include <vector>
+#include <unordered_map>
 
 namespace Assembler {
 class SemanticAnalyzer
 {
 public:
 	std::vector<Cpu::Isa::Instruction> Analyze(
-		const std::vector<ParsedInstruction>& parsedInstructions,
+		const std::vector<Statement>& statements,
 		DiagnosticBag& diagnostics) const;
 
 private:

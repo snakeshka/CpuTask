@@ -43,6 +43,13 @@ std::vector<Token> Lexer::Lex(DiagnosticBag& diagnostics)
 			continue;
 		}
 
+		if (ch == ':') {
+			const auto begin = m_Location;
+			Advance();
+			tokens.push_back(Token{TokenKind::Colon, ":", MakeRange(begin)});
+			continue;
+		}
+
 		if (ch == '\n') {
 			const auto begin = m_Location;
 			Advance();

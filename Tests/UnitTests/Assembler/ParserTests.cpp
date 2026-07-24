@@ -11,7 +11,7 @@ struct ParseResult
 {
 	Assembler::DiagnosticBag diagnostics;
 	std::vector<Assembler::Token> tokens;
-	std::vector<Assembler::ParsedInstruction> instructions;
+	std::vector<Assembler::Statement> statements; // <-- Раньше было ParsedInstruction
 };
 
 ParseResult parseSource(std::string_view source)
@@ -26,7 +26,7 @@ ParseResult parseSource(std::string_view source)
 	}
 
 	Assembler::Parser parser(result.tokens);
-	result.instructions = parser.Parse(result.diagnostics);
+	result.statements = parser.Parse(result.diagnostics);
 
 	return result;
 }
@@ -48,9 +48,9 @@ TEST(ParserTests, ParsesLiInstruction)
 	const auto result = parseSource("LI R0 0x1\n");
 
 	ASSERT_FALSE(result.diagnostics.HasErrors());
-	ASSERT_EQ(result.instructions.size(), 1);
+	ASSERT_EQ(result.statements.size(), 1);
 
-	const auto& instruction = result.instructions[0];
+	const auto& instruction = result.statements[0].Instruction;
 
 	EXPECT_EQ(instruction.Mnemonic, "LI");
 
@@ -68,9 +68,9 @@ TEST(ParserTests, ParsesAddInstruction)
 	const auto result = parseSource("ADD R1 R1 R0\n");
 
 	ASSERT_FALSE(result.diagnostics.HasErrors());
-	ASSERT_EQ(result.instructions.size(), 1);
+	ASSERT_EQ(result.statements.size(), 1);
 
-	const auto& instruction = result.instructions[0];
+	const auto& instruction = result.statements[0].Instruction;
 
 	EXPECT_EQ(instruction.Mnemonic, "ADD");
 
@@ -94,24 +94,24 @@ TEST(ParserTests, ParsesMultipleInstructions)
 		"ADD R1 R1 R0\n");
 
 	ASSERT_FALSE(result.diagnostics.HasErrors());
-	ASSERT_EQ(result.instructions.size(), 3);
+	ASSERT_EQ(result.statements.size(), 3);
 
-	EXPECT_EQ(result.instructions[0].Mnemonic, "LI");
-	EXPECT_EQ(result.instructions[1].Mnemonic, "LI");
-	EXPECT_EQ(result.instructions[2].Mnemonic, "ADD");
+	EXPECT_EQ(result.statements[0].Instruction.Mnemonic, "LI");
+	EXPECT_EQ(result.statements[1].Instruction.Mnemonic, "LI");
+	EXPECT_EQ(result.statements[2].Instruction.Mnemonic, "ADD");
 
-	ASSERT_EQ(result.instructions[0].Operands.size(), 2);
-	EXPECT_EQ(result.instructions[0].Operands[0].Text, "R0");
-	EXPECT_EQ(result.instructions[0].Operands[1].Text, "0x1");
+	ASSERT_EQ(result.statements[0].Instruction.Operands.size(), 2);
+	EXPECT_EQ(result.statements[0].Instruction.Operands[0].Text, "R0");
+	EXPECT_EQ(result.statements[0].Instruction.Operands[1].Text, "0x1");
 
-	ASSERT_EQ(result.instructions[1].Operands.size(), 2);
-	EXPECT_EQ(result.instructions[1].Operands[0].Text, "R1");
-	EXPECT_EQ(result.instructions[1].Operands[1].Text, "0x8000");
+	ASSERT_EQ(result.statements[1].Instruction.Operands.size(), 2);
+	EXPECT_EQ(result.statements[1].Instruction.Operands[0].Text, "R1");
+	EXPECT_EQ(result.statements[1].Instruction.Operands[1].Text, "0x8000");
 
-	ASSERT_EQ(result.instructions[2].Operands.size(), 3);
-	EXPECT_EQ(result.instructions[2].Operands[0].Text, "R1");
-	EXPECT_EQ(result.instructions[2].Operands[1].Text, "R1");
-	EXPECT_EQ(result.instructions[2].Operands[2].Text, "R0");
+	ASSERT_EQ(result.statements[2].Instruction.Operands.size(), 3);
+	EXPECT_EQ(result.statements[2].Instruction.Operands[0].Text, "R1");
+	EXPECT_EQ(result.statements[2].Instruction.Operands[1].Text, "R1");
+	EXPECT_EQ(result.statements[2].Instruction.Operands[2].Text, "R0");
 }
 
 TEST(ParserTests, SkipsEmptyLines)
@@ -125,10 +125,10 @@ TEST(ParserTests, SkipsEmptyLines)
 		"\n");
 
 	ASSERT_FALSE(result.diagnostics.HasErrors());
-	ASSERT_EQ(result.instructions.size(), 2);
+	ASSERT_EQ(result.statements.size(), 2);
 
-	EXPECT_EQ(result.instructions[0].Mnemonic, "LI");
-	EXPECT_EQ(result.instructions[1].Mnemonic, "ADD");
+	EXPECT_EQ(result.statements[0].Instruction.Mnemonic, "LI");
+	EXPECT_EQ(result.statements[1].Instruction.Mnemonic, "ADD");
 }
 
 TEST(ParserTests, AcceptsFileWithoutTrailingNewline)
@@ -136,13 +136,13 @@ TEST(ParserTests, AcceptsFileWithoutTrailingNewline)
 	const auto result = parseSource("LI R0 0x1");
 
 	ASSERT_FALSE(result.diagnostics.HasErrors());
-	ASSERT_EQ(result.instructions.size(), 1);
+	ASSERT_EQ(result.statements.size(), 1);
 
-	EXPECT_EQ(result.instructions[0].Mnemonic, "LI");
+	EXPECT_EQ(result.statements[0].Instruction.Mnemonic, "LI");
 
-	ASSERT_EQ(result.instructions[0].Operands.size(), 2);
-	EXPECT_EQ(result.instructions[0].Operands[0].Text, "R0");
-	EXPECT_EQ(result.instructions[0].Operands[1].Text, "0x1");
+	ASSERT_EQ(result.statements[0].Instruction.Operands.size(), 2);
+	EXPECT_EQ(result.statements[0].Instruction.Operands[0].Text, "R0");
+	EXPECT_EQ(result.statements[0].Instruction.Operands[1].Text, "0x1");
 }
 
 TEST(ParserTests, KeepsSourceLocationForMnemonic)
@@ -152,9 +152,9 @@ TEST(ParserTests, KeepsSourceLocationForMnemonic)
 		"ADD R1 R1 R0\n");
 
 	ASSERT_FALSE(result.diagnostics.HasErrors());
-	ASSERT_EQ(result.instructions.size(), 1);
+	ASSERT_EQ(result.statements.size(), 1);
 
-	const auto& instruction = result.instructions[0];
+	const auto& instruction = result.statements[0].Instruction;
 
 	EXPECT_EQ(instruction.Mnemonic, "ADD");
 	EXPECT_EQ(instruction.Range.Begin.Line, 2);
@@ -166,9 +166,9 @@ TEST(ParserTests, KeepsSourceLocationForOperands)
 	const auto result = parseSource("ADD R1 R1 R0\n");
 
 	ASSERT_FALSE(result.diagnostics.HasErrors());
-	ASSERT_EQ(result.instructions.size(), 1);
+	ASSERT_EQ(result.statements.size(), 1);
 
-	const auto& instruction = result.instructions[0];
+	const auto& instruction = result.statements[0].Instruction;
 
 	ASSERT_EQ(instruction.Operands.size(), 3);
 
@@ -202,4 +202,38 @@ TEST(ParserTests, ReportsUnexpectedTokenForUnknownToken)
 	EXPECT_TRUE(
 		hasCode(result.diagnostics, Assembler::DiagnosticCode::UnknownCharacter) ||
 		hasCode(result.diagnostics, Assembler::DiagnosticCode::UnexpectedToken));
+}
+
+TEST(ParserTests, ParsesLabelDefinition)
+{
+	const auto result = parseSource(
+		"MY_LABEL:\n"
+		"ADD R0 R0 R0\n"
+		);
+
+	ASSERT_FALSE(result.diagnostics.HasErrors());
+	ASSERT_EQ(result.statements.size(), 2);
+
+	// Проверка метки
+	EXPECT_EQ(result.statements[0].Kind, Assembler::StatementKind::Label);
+	EXPECT_EQ(result.statements[0].LabelName, "MY_LABEL");
+
+	// Проверка следующей инструкции
+	EXPECT_EQ(result.statements[1].Kind, Assembler::StatementKind::Instruction);
+	EXPECT_EQ(result.statements[1].Instruction.Mnemonic, "ADD");
+}
+
+TEST(ParserTests, ParsesInstructionWithLabelOperand)
+{
+	const auto result = parseSource("RJMP TARGET_LABEL\n");
+
+	ASSERT_FALSE(result.diagnostics.HasErrors());
+	ASSERT_EQ(result.statements.size(), 1);
+	ASSERT_EQ(result.statements[0].Kind, Assembler::StatementKind::Instruction);
+
+	const auto& instruction = result.statements[0].Instruction;
+	EXPECT_EQ(instruction.Mnemonic, "RJMP");
+	ASSERT_EQ(instruction.Operands.size(), 1);
+	EXPECT_EQ(instruction.Operands[0].Kind, Assembler::ParsedOperandKind::Identifier);
+	EXPECT_EQ(instruction.Operands[0].Text, "TARGET_LABEL");
 }

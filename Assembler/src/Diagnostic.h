@@ -4,14 +4,14 @@
 #include <string>
 
 namespace Assembler {
-enum class DiagnosticSeverity
+enum class DiagnosticSeverity : uint8_t
 {
 	Error,
 	Warning,
 	Note
 };
 
-enum class DiagnosticCode
+enum class DiagnosticCode : uint8_t
 {
 	UnknownCharacter,
 	InvalidNumberLiteral,
@@ -25,7 +25,10 @@ enum class DiagnosticCode
 	WrongOperandType,
 	CannotOpenInputFile,
 	CannotWriteOutputFile,
-	InternalAssemblerError
+	InternalAssemblerError,
+	DuplicateLabel,
+	UndefinedLabel,
+	InvalidLabelUsage
 };
 
 struct SourceLocation
@@ -42,9 +45,9 @@ struct SourceRange
 
 struct Diagnostic
 {
-	DiagnosticSeverity Severity;
-	DiagnosticCode Code;
-	SourceRange Range;
+	DiagnosticSeverity Severity{};
+	DiagnosticCode Code{};
+	SourceRange Range{};
 	std::string Message;
 };
 

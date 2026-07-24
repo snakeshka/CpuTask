@@ -9,6 +9,7 @@ enum class TokenKind
 {
 	Identifier,
 	Number,
+	Colon,
 	EndOfLine,
 	EndOfFile,
 	Unknown

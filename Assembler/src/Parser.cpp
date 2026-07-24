@@ -18,9 +18,9 @@ Parser::Parser(std::span<const Token> tokens)
 {
 }
 
-std::vector<ParsedInstruction> Parser::Parse(DiagnosticBag& diagnostics)
+std::vector<Statement> Parser::Parse(DiagnosticBag& diagnostics)
 {
-	std::vector<ParsedInstruction> instructions;
+	std::vector<Statement> statements;
 
 	while (!IsAtEnd()) {
 		SkipEmptyLines();
@@ -39,6 +39,24 @@ std::vector<ParsedInstruction> Parser::Parse(DiagnosticBag& diagnostics)
 			continue;
 		}
 
+		// Проверяем, является ли это объявлением метки (Identifier ':')
+		if (m_Position + 1 < m_Tokens.size() && m_Tokens[m_Position + 1].Kind == TokenKind::Colon) {
+			const auto labelToken = Advance();
+			Advance();
+
+			Statement stmt;
+			stmt.Kind = StatementKind::Label;
+			stmt.LabelName = labelToken.Text;
+			stmt.Range = labelToken.Range;
+			statements.push_back(std::move(stmt));
+
+			if (!IsAtEnd() && Current().Kind == TokenKind::EndOfLine) {
+				Advance();
+			}
+			continue;
+		}
+
+		// Парсинг обычной инструкции
 		const auto mnemonic = Advance();
 		ParsedInstruction instruction;
 		instruction.Mnemonic = mnemonic.Text;
@@ -61,44 +79,17 @@ std::vector<ParsedInstruction> Parser::Parse(DiagnosticBag& diagnostics)
 			instruction.Operands.push_back(ParsedOperand{toParsedOperandKind(operand.Kind), operand.Text, operand.Range});
 		}
 
-		instructions.push_back(std::move(instruction));
+		Statement stmt;
+		stmt.Kind = StatementKind::Instruction;
+		stmt.Instruction = std::move(instruction);
+		stmt.Range = stmt.Instruction.Range;
+		statements.push_back(std::move(stmt));
+
 		if (!IsAtEnd() && Current().Kind == TokenKind::EndOfLine) {
 			Advance();
 		}
 	}
 
-	return instructions;
-}
-
-const Token& Parser::Current() const
-{
-	return m_Tokens[m_Position];
-}
-
-const Token& Parser::Advance()
-{
-	return m_Tokens[m_Position++];
-}
-
-bool Parser::IsAtEnd() const
-{
-	return m_Position >= m_Tokens.size() || Current().Kind == TokenKind::EndOfFile;
-}
-
-void Parser::SkipLine()
-{
-	while (!IsAtEnd() && Current().Kind != TokenKind::EndOfLine) {
-		Advance();
-	}
-	if (!IsAtEnd() && Current().Kind == TokenKind::EndOfLine) {
-		Advance();
-	}
-}
-
-void Parser::SkipEmptyLines()
-{
-	while (!IsAtEnd() && Current().Kind == TokenKind::EndOfLine) {
-		Advance();
-	}
+	return statements;
 }
 }

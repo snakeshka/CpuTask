@@ -130,5 +130,54 @@ TEST(SemanticAnalyzerTests, ReportsInvalidImmediateOrWrongOperandType)
 
 	EXPECT_TRUE(
 		Tests::HasDiagnosticCode(result.diagnostics, Assembler::DiagnosticCode::InvalidImmediate) ||
-		Tests::HasDiagnosticCode(result.diagnostics, Assembler::DiagnosticCode::WrongOperandType));
+		Tests::HasDiagnosticCode(result.diagnostics, Assembler::DiagnosticCode::WrongOperandType) ||
+		Tests::HasDiagnosticCode(result.diagnostics, Assembler::DiagnosticCode::UndefinedLabel));
+}
+
+TEST(SemanticAnalyzerTests, ComputesLabelRelativeJumpOffset)
+{
+	// RJMP (адрес 0) на метку TARGET (адрес 4).
+	// Смещение = (4 - 0) / 4 = 1.
+	const auto result = analyzeSource(
+		"RJMP TARGET\n"
+		"TARGET:\n"
+		"ADD R0 R0 R0\n"
+		);
+
+	ASSERT_FALSE(result.diagnostics.HasErrors());
+	ASSERT_EQ(result.instructions.size(), 2);
+
+	// RJMP (опкод 0x30)
+	EXPECT_EQ(result.instructions[0].opcode, Cpu::Isa::Opcode::RJMP);
+	EXPECT_EQ(result.instructions[0].b, 0x01); // Младший байт смещения (+1)
+	EXPECT_EQ(result.instructions[0].c, 0x00); // Старший байт смещения
+}
+
+TEST(SemanticAnalyzerTests, ReportsDuplicateLabel)
+{
+	const auto result = analyzeSource(
+		"FOO:\n"
+		"ADD R0 R0 R0\n"
+		"FOO:\n"
+		"SUB R0 R0 R0\n"
+		);
+
+	EXPECT_TRUE(Tests::HasDiagnosticCode(result.diagnostics, Assembler::DiagnosticCode::DuplicateLabel));
+}
+
+TEST(SemanticAnalyzerTests, ReportsUndefinedLabel)
+{
+	const auto result = analyzeSource("BRZ R0 NON_EXISTENT_LABEL\n");
+
+	EXPECT_TRUE(Tests::HasDiagnosticCode(result.diagnostics, Assembler::DiagnosticCode::UndefinedLabel));
+}
+
+TEST(SemanticAnalyzerTests, ReportsInvalidLabelUsage)
+{
+	const auto result = analyzeSource(
+		"SOME_LABEL:\n"
+		"ASPI R0 SOME_LABEL\n"
+		);
+
+	EXPECT_TRUE(Tests::HasDiagnosticCode(result.diagnostics, Assembler::DiagnosticCode::InvalidLabelUsage));
 }
