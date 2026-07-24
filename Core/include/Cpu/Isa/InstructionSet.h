@@ -47,7 +47,13 @@ inline constexpr std::array<OperandKind, 1> IOperands = {
 	OperandKind::Immediate16,
 };
 
-inline constexpr std::array<InstructionFormat, 36> Instructions = {
+inline constexpr std::array<OperandKind, 3> RRIOperands = {
+	OperandKind::Register,
+	OperandKind::Register,
+	OperandKind::Immediate16,
+};
+
+inline constexpr std::array Instructions = {
 	InstructionFormat{"LI", Opcode::LI, RIOperands},
 	InstructionFormat{"LUI", Opcode::LUI, RUIOperands},
 	InstructionFormat{"ADD", Opcode::ADD, RRROperands},
@@ -61,12 +67,12 @@ inline constexpr std::array<InstructionFormat, 36> Instructions = {
 	InstructionFormat{"MUL", Opcode::MUL, RRROperands},
 	InstructionFormat{"UDIV", Opcode::UDIV, RRROperands},
 	InstructionFormat{"SDIV", Opcode::SDIV, RRROperands},
-	InstructionFormat{"LDB", Opcode::LDB, RIOperands},
-	InstructionFormat{"LDH", Opcode::LDH, RIOperands},
-	InstructionFormat{"LDW", Opcode::LDW, RIOperands},
-	InstructionFormat{"STB", Opcode::STB, RIOperands},
-	InstructionFormat{"STH", Opcode::STH, RIOperands},
-	InstructionFormat{"STW", Opcode::STW, RIOperands},
+	InstructionFormat{"LDB", Opcode::LDB, RRIOperands},
+	InstructionFormat{"LDH", Opcode::LDH, RRIOperands},
+	InstructionFormat{"LDW", Opcode::LDW, RRIOperands},
+	InstructionFormat{"STB", Opcode::STB, RRIOperands},
+	InstructionFormat{"STH", Opcode::STH, RRIOperands},
+	InstructionFormat{"STW", Opcode::STW, RRIOperands},
 	InstructionFormat{"SXT", Opcode::SXT, RIOperands},
 	InstructionFormat{"BSWAP", Opcode::BSWAP, RIOperands},
 	InstructionFormat{"SCRW", Opcode::SCRW, SROperands},
@@ -90,6 +96,17 @@ inline std::span<const InstructionFormat> instructionSet()
 	return Instructions;
 }
 
+consteval auto makeOpcodeTable()
+{
+	std::array<std::optional<InstructionFormat>, 256> table{};
+	for (const auto& instruction : Instructions) {
+		table[static_cast<size_t>(instruction.opcode)] = instruction;
+	}
+	return table;
+}
+
+inline constexpr auto OpcodeTable = makeOpcodeTable();
+
 constexpr std::optional<InstructionFormat> findInstructionByMnemonic(std::string_view mnemonic)
 {
 	for (const auto& instruction : Instructions) {
@@ -103,12 +120,6 @@ constexpr std::optional<InstructionFormat> findInstructionByMnemonic(std::string
 
 constexpr std::optional<InstructionFormat> findInstructionByOpcode(Opcode opcode)
 {
-	for (const auto& instruction : Instructions) {
-		if (instruction.opcode == opcode) {
-			return instruction;
-		}
-	}
-
-	return std::nullopt;
+	return OpcodeTable[static_cast<size_t>(opcode)];
 }
 }

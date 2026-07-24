@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <memory>
 #include <string>
+#include <bitset>
 
 namespace Emulator {
 struct AddrInterval
@@ -17,8 +18,9 @@ class Ram
 {
 public:
 	static constexpr uint32_t PageSize = 4096;
+	static constexpr uint32_t CellsPerPage = PageSize / sizeof(uint32_t);
 
-	Ram(uint32_t maxSize, bool warnUninit = false);
+	Ram(uint32_t maxSize, bool warnUninit = false, bool clearStack = false);
 
 	bool IsValidRange(uint64_t address, uint32_t size) const;
 	void SetTraceEnabled(bool enabled, std::vector<AddrInterval> intervals = {});
@@ -37,8 +39,8 @@ public:
 private:
 	struct Page
 	{
-		uint8_t data[PageSize]{};
-		bool initialized[PageSize]{};
+		uint32_t cells[CellsPerPage]{};
+		std::bitset<PageSize> initialized{};
 	};
 
 	uint32_t m_MaxSize = 0;

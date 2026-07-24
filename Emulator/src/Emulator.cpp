@@ -18,7 +18,7 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode, bool traceEnabled, s
 		return EmulatorResult{CpuState{}, false, "program size exceeds RAM size"};
 	}
 
-	Ram ram(ramSize, warnUninit);
+	Ram ram(ramSize, warnUninit, clearStack);
 	ram.SetTraceEnabled(ramTraceEnabled, ramIntervals);
 
 	uint32_t tick = 1;

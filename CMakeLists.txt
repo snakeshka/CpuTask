@@ -11,6 +11,12 @@ add_subdirectory(Assembler)
 add_subdirectory(Emulator)
 add_subdirectory(Tests)
 
+if(MSVC)
+    add_compile_options(/W4)
+else()
+    add_compile_options(-Wall -Wextra)
+endif()
+
 option(TRACING "Enable CPU instruction execution tracing" ON)
 if(TRACING)
     add_compile_definitions(TRACING=1)
