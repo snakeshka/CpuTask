@@ -387,3 +387,31 @@ TEST(ExecutorTests, ExecutesSignedComparisons)
 	executor.Execute(state, ram, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SLT, 3, 1, 2}, 2);
 	EXPECT_EQ(state.GetRegister(3), 1u);
 }
+
+TEST(ExecutorTests, ExecutesRihInstruction)
+{
+	Emulator::CpuState state;
+	state.SetScr(3, 0x2000); // IIP = 0x2000
+	Emulator::Ram ram(65536);
+	const Emulator::Executor executor;
+
+	// RIH (возврат из прерывания: IP = IIP)
+	auto status = executor.Execute(state, ram, Cpu::Isa::Instruction{Cpu::Isa::Opcode::RIH, 0, 0, 0}, 1);
+
+	EXPECT_EQ(status, Emulator::ExecutionStatus::Success);
+	// Ожидаем 0x2000 (учитывая, что Execute при Success добавит +4 -> 0x2000)
+	EXPECT_EQ(state.InstructionPointer(), 0x2000u);
+}
+
+TEST(ExecutorTests, ReturnsInvalidScrIndexStatus)
+{
+	Emulator::CpuState state;
+	state.SetRegister(1, 100);
+	Emulator::Ram ram(65536);
+	const Emulator::Executor executor;
+
+	// SCRW с невалидным индексом 10 (SCRW 10 R1)
+	auto status = executor.Execute(state, ram, Cpu::Isa::Instruction{Cpu::Isa::Opcode::SCRW, 10, 1, 0}, 1);
+
+	EXPECT_EQ(status, Emulator::ExecutionStatus::InvalidScrIndex);
+}

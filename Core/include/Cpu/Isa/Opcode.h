@@ -35,6 +35,7 @@ enum class Opcode : uint8_t
 	BRNZ = 0x32,
 	AJMP = 0x33,
 	CALL = 0x34,
+	RIH = 0x35,
 	EQ = 0x40,
 	NE = 0x41,
 	LT = 0x42,

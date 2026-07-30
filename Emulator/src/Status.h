@@ -9,7 +9,8 @@ enum class ExecutionStatus
 	DivisionByZero,
 	IllegalInstruction,
 	MemoryOutOfBounds,
-	StackOverflow
+	StackOverflow,
+	InvalidScrIndex
 };
 
 inline std::string_view ToString(ExecutionStatus status)
@@ -25,6 +26,8 @@ inline std::string_view ToString(ExecutionStatus status)
 			return "memory access out of bounds";
 		case ExecutionStatus::StackOverflow:
 			return "stack overflow";
+		case ExecutionStatus::InvalidScrIndex:
+			return "invalid SCR index";
 	}
 	return "unknown error";
 }

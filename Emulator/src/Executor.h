@@ -55,6 +55,7 @@ private:
 	static ExecutionStatus ExecuteBrnz(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
 	static ExecutionStatus ExecuteAjmp(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
 	static ExecutionStatus ExecuteCall(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteRih(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
 	static ExecutionStatus ExecuteEq(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
 	static ExecutionStatus ExecuteNe(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);
 	static ExecutionStatus ExecuteLt(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick);

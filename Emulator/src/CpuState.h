@@ -49,6 +49,11 @@ public:
 		m_Ip += InstructionSize;
 	}
 
+	bool IsValidScr(size_t index) const
+	{
+		return index < 6;
+	}
+
 	uint32_t GetScr(size_t index) const
 	{
 		switch (static_cast<SystemRegister>(index)) {
@@ -58,6 +63,12 @@ public:
 				return m_SpTop;
 			case SystemRegister::SP_SIZE:
 				return m_SpSize;
+			case SystemRegister::IIP:
+				return m_Iip;
+			case SystemRegister::ICR:
+				return m_Icr;
+			case SystemRegister::IHR:
+				return m_Ihr;
 			default:
 				CPU_ASSERT(false, "Invalid SCR index!");
 				return 0;
@@ -76,6 +87,15 @@ public:
 			case SystemRegister::SP_SIZE:
 				m_SpSize = value;
 				break;
+			case SystemRegister::IIP:
+				m_Iip = value;
+				break;
+			case SystemRegister::ICR:
+				m_Icr = value;
+				break;
+			case SystemRegister::IHR:
+				m_Ihr = value;
+				break;
 			default:
 				CPU_ASSERT(false, "Invalid SCR index!");
 				break;
@@ -84,8 +104,11 @@ public:
 
 private:
 	std::array<uint32_t, RegisterCount> m_Registers{};
-	uint32_t m_Ip = 0;
-	uint32_t m_SpTop = 0;
-	uint32_t m_SpSize = 0;
+	uint32_t m_Ip = 0;     // SCR 0: IP
+	uint32_t m_SpTop = 0;  // SCR 1: SP_TOP
+	uint32_t m_SpSize = 0; // SCR 2: SP_SIZE
+	uint32_t m_Iip = 0;    // SCR 3: IIP
+	uint32_t m_Icr = 0;    // SCR 4: ICR
+	uint32_t m_Ihr = 0;    // SCR 5: IHR
 };
 }

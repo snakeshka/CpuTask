@@ -22,9 +22,10 @@ struct TickInterval
 class Tracer
 {
 public:
-	explicit Tracer(const bool enabled, std::vector<TickInterval> intervals = {})
+	explicit Tracer(const bool enabled, std::vector<TickInterval> intervals = {}, bool traceIntEnabled = false)
 		: m_Enabled(enabled)
 		  , m_Intervals(std::move(intervals))
+		  , m_TraceIntEnabled(traceIntEnabled)
 	{
 	}
 
@@ -64,6 +65,9 @@ public:
 #endif
 	}
 
+	void TraceInterrupt(uint32_t tick, uint32_t iip, uint32_t icr, uint32_t ihr);
+	void PrintTraceLine(const CpuState& state, const Cpu::Isa::Instruction& instruction, bool interrupted = false) const;
+
 private:
 	bool m_Enabled = false;
 #if TRACING
@@ -72,6 +76,7 @@ private:
 	uint32_t m_ValB = 0;
 	uint32_t m_ValC = 0;
 	std::vector<TickInterval> m_Intervals;
+	bool m_TraceIntEnabled = false;
 
 	inline bool IsTickAllowed(uint32_t tick) const
 	{
@@ -89,7 +94,6 @@ private:
 		return false;
 	}
 
-	void PrintTraceLine(const CpuState& state, const Cpu::Isa::Instruction& instruction) const;
 #endif
 };
 }

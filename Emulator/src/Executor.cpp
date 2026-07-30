@@ -66,6 +66,7 @@ constexpr std::array<Executor::Handler, 256> Executor::CreateHandlersMap()
 	handlers[toIdx(Cpu::Isa::Opcode::BRNZ)] = &Executor::ExecuteBrnz;
 	handlers[toIdx(Cpu::Isa::Opcode::AJMP)] = &Executor::ExecuteAjmp;
 	handlers[toIdx(Cpu::Isa::Opcode::CALL)] = &Executor::ExecuteCall;
+	handlers[toIdx(Cpu::Isa::Opcode::RIH)] = &Executor::ExecuteRih;
 	handlers[toIdx(Cpu::Isa::Opcode::EQ)] = &Executor::ExecuteEq;
 	handlers[toIdx(Cpu::Isa::Opcode::NE)] = &Executor::ExecuteNe;
 	handlers[toIdx(Cpu::Isa::Opcode::LT)] = &Executor::ExecuteLt;
@@ -285,12 +286,18 @@ ExecutionStatus Executor::ExecuteBswap(CpuState& state, Ram& ram, const Cpu::Isa
 
 ExecutionStatus Executor::ExecuteScrw(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
+	if (!state.IsValidScr(instruction.a)) {
+		return ExecutionStatus::InvalidScrIndex;
+	}
 	state.SetScr(instruction.a, state.GetRegister(instruction.b));
 	return ExecutionStatus::Success;
 }
 
 ExecutionStatus Executor::ExecuteScrr(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
+	if (!state.IsValidScr(instruction.b)) {
+		return ExecutionStatus::InvalidScrIndex;
+	}
 	state.SetRegister(instruction.a, state.GetScr(instruction.b));
 	return ExecutionStatus::Success;
 }
@@ -367,6 +374,13 @@ ExecutionStatus Executor::ExecuteCall(CpuState& state, Ram& ram, const Cpu::Isa:
 	// Сохраняем адрес следующей инструкции в R1
 	state.SetRegister(1, state.InstructionPointer() + 4);
 	state.SetInstructionPointer(state.GetRegister(instruction.a) - 4);
+	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteRih(CpuState& state, Ram& ram, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	// IP = IIP (с учетом последующего Advance (+4) в Executor::Execute)
+	state.SetInstructionPointer(state.GetScr(3) - 4);
 	return ExecutionStatus::Success;
 }
 

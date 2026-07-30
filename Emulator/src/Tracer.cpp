@@ -5,13 +5,26 @@
 
 #if TRACING
 namespace Emulator {
-void Tracer::PrintTraceLine(const CpuState& state, const Cpu::Isa::Instruction& instruction) const
+void Tracer::TraceInterrupt(uint32_t tick, uint32_t iip, uint32_t icr, uint32_t ihr)
+{
+	if (m_TraceIntEnabled) {
+		std::cout << std::dec << tick << " INT IIP=0x" << std::hex << iip
+			<< " ICR=" << std::dec << icr
+			<< " IP=0x" << std::hex << ihr << "\n";
+	}
+}
+
+void Tracer::PrintTraceLine(const CpuState& state, const Cpu::Isa::Instruction& instruction, bool interrupted) const
 {
 	auto formatOpt = Cpu::Isa::findInstructionByOpcode(instruction.opcode);
 	if (!formatOpt.has_value())
 		return;
 
-	std::cout << "---- " << std::dec << m_Tick << " 0x" << std::hex << m_Addr << " ----\n";
+	std::cout << "---- " << std::dec << m_Tick << " 0x" << std::hex << m_Addr;
+	if (interrupted) {
+		std::cout << " (interrupted)";
+	}
+	std::cout << " ----\n";
 
 	uint32_t encoding = static_cast<uint8_t>(instruction.opcode) |
 		(static_cast<uint32_t>(instruction.a) << 8) |

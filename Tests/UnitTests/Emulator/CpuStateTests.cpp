@@ -39,3 +39,28 @@ TEST(CpuStateTests, AdvancesProgramCounterByInstructionSize)
 	state.AdvanceInstructionPointer();
 	EXPECT_EQ(state.InstructionPointer(), 8u);
 }
+
+TEST(CpuStateTests, HandlesInterruptSystemRegisters)
+{
+	Emulator::CpuState state;
+	// SCR 3: IIP, SCR 4: ICR, SCR 5: IHR
+	state.SetScr(3, 0x1004); // IIP
+	state.SetScr(4, 1);      // ICR (Illegal Operand)
+	state.SetScr(5, 0x8000); // IHR
+	EXPECT_EQ(state.GetScr(3), 0x1004u);
+	EXPECT_EQ(state.GetScr(4), 1u);
+	EXPECT_EQ(state.GetScr(5), 0x8000u);
+}
+
+TEST(CpuStateTests, ValidatesScrIndices)
+{
+	Emulator::CpuState state;
+	EXPECT_TRUE(state.IsValidScr(0));  // IP
+	EXPECT_TRUE(state.IsValidScr(1));  // SP_TOP
+	EXPECT_TRUE(state.IsValidScr(2));  // SP_SIZE
+	EXPECT_TRUE(state.IsValidScr(3));  // IIP
+	EXPECT_TRUE(state.IsValidScr(4));  // ICR
+	EXPECT_TRUE(state.IsValidScr(5));  // IHR
+	EXPECT_FALSE(state.IsValidScr(6)); // Несуществующий регистр
+	EXPECT_FALSE(state.IsValidScr(10));
+}

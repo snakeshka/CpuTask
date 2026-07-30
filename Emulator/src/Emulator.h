@@ -26,6 +26,7 @@ public:
 		bool warnUninit = false,
 		std::vector<AddrInterval> ramIntervals = {},
 		bool ramTraceEnabled = false,
-		bool clearStack = false) const;
+		bool clearStack = false,
+		bool traceIntEnabled = false) const;
 };
 }

@@ -53,6 +53,8 @@ inline constexpr std::array<OperandKind, 3> RRIOperands = {
 	OperandKind::Immediate16,
 };
 
+inline constexpr std::array<OperandKind, 0> NoOperands = {};
+
 inline constexpr std::array Instructions = {
 	InstructionFormat{"LI", Opcode::LI, RIOperands},
 	InstructionFormat{"LUI", Opcode::LUI, RUIOperands},
@@ -84,6 +86,7 @@ inline constexpr std::array Instructions = {
 	InstructionFormat{"BRNZ", Opcode::BRNZ, RIOperands},
 	InstructionFormat{"AJMP", Opcode::AJMP, ROperands},
 	InstructionFormat{"CALL", Opcode::CALL, ROperands},
+	InstructionFormat{"RIH", Opcode::RIH, NoOperands},
 	InstructionFormat{"EQ", Opcode::EQ, RRROperands},
 	InstructionFormat{"NE", Opcode::NE, RRROperands},
 	InstructionFormat{"LT", Opcode::LT, RRROperands},

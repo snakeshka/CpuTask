@@ -128,6 +128,12 @@ std::vector<Cpu::Isa::Instruction> SemanticAnalyzer::Analyze(
 					scrIndex = 1;
 				else if (operand.Text == "SP_SIZE")
 					scrIndex = 2;
+				else if (operand.Text == "IIP")
+					scrIndex = 3;
+				else if (operand.Text == "ICR")
+					scrIndex = 4;
+				else if (operand.Text == "IHR")
+					scrIndex = 5;
 				else {
 					diagnostics.Add(Diagnostic{DiagnosticSeverity::Error, DiagnosticCode::InvalidRegister, operand.Range, "invalid system register \"" + operand.Text + "\""});
 					ok = false;
