@@ -64,6 +64,18 @@ public:
 		m_Tick++;
 #endif
 	}
+	
+	inline void SetTraceDisasmEnabled(bool enabled) {
+#if TRACING
+        m_Enabled = enabled;
+#endif
+    }
+
+	inline bool IsTraceDisasmEnabled() const {
+#if TRACING
+        return m_Enabled;
+#endif
+    }
 
 	void TraceInterrupt(uint32_t tick, uint32_t iip, uint32_t icr, uint32_t ihr);
 	void PrintTraceLine(const CpuState& state, const Cpu::Isa::Instruction& instruction, bool interrupted = false) const;

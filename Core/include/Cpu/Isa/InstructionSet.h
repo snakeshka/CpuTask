@@ -92,7 +92,11 @@ inline constexpr std::array Instructions = {
 	InstructionFormat{"LT", Opcode::LT, RRROperands},
 	InstructionFormat{"GE", Opcode::GE, RRROperands},
 	InstructionFormat{"SLT", Opcode::SLT, RRROperands},
-	InstructionFormat{"SGE", Opcode::SGE, RRROperands}};
+	InstructionFormat{"SGE", Opcode::SGE, RRROperands},
+	InstructionFormat{"_SIM_GET_TICK", Opcode::SIM_CTRL, ROperands},
+    InstructionFormat{"_SIM_TRACE_DISASM", Opcode::SIM_CTRL, ROperands},
+    InstructionFormat{"_SIM_HALTI", Opcode::SIM_CTRL, IOperands},
+    InstructionFormat{"_SIM_HALTR", Opcode::SIM_CTRL, ROperands}};
 
 inline std::span<const InstructionFormat> instructionSet()
 {

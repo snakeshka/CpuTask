@@ -213,6 +213,21 @@ std::vector<Cpu::Isa::Instruction> SemanticAnalyzer::Analyze(
 				instruction.c = static_cast<uint8_t>((immediate >> 8) & 0x00FF);
 			}
 		}
+		if (parsed.Mnemonic == "_SIM_GET_TICK") {
+            instruction.c = instruction.a;
+            instruction.a = 0xFF;
+            instruction.b = 0x01;
+        } else if (parsed.Mnemonic == "_SIM_TRACE_DISASM") {
+            instruction.c = instruction.a;
+            instruction.a = 0xFF;
+            instruction.b = 0x02;
+        } else if (parsed.Mnemonic == "_SIM_HALTR") {
+            instruction.c = instruction.a;
+            instruction.a = 0xFF;
+            instruction.b = 0x00;
+        } else if (parsed.Mnemonic == "_SIM_HALTI") {
+            instruction.a = 0x00;
+        }
 		if (ok) {
 			instructions.push_back(instruction);
 			instructionAddress += 4;

@@ -63,7 +63,7 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 		}
 		const auto& instruction = *instrOpt;
 		tracer.SaveStateBefore(state, instruction);
-		auto status = executor.Execute(state, ram, instruction, tick);
+		auto status = executor.Execute(state, ram, tracer, instruction, tick);
 		// Ошибка выполнения инструкции
 		if (status != ExecutionStatus::Success) {
 			uint32_t cause = 0;

@@ -41,6 +41,7 @@ enum class Opcode : uint8_t
 	LT = 0x42,
 	GE = 0x43,
 	SLT = 0x44,
-	SGE = 0x45
+	SGE = 0x45,
+	SIM_CTRL = 0xFF
 };
 }

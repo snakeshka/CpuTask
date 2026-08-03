@@ -10,7 +10,9 @@ enum class ExecutionStatus
 	IllegalInstruction,
 	MemoryOutOfBounds,
 	StackOverflow,
-	InvalidScrIndex
+	InvalidScrIndex,
+	HaltedFailed,
+	HaltedPassed,
 };
 
 inline std::string_view ToString(ExecutionStatus status)

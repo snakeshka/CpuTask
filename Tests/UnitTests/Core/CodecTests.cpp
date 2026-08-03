@@ -40,7 +40,7 @@ TEST(CodecTests, DecodesKnownInstructions)
 TEST(CodecTests, RejectsMalformedProgram)
 {
 	EXPECT_FALSE(Cpu::Isa::decodeProgram(Cpu::Bytecode{0x00, 0x01, 0x00}).has_value());
-	EXPECT_FALSE(Cpu::Isa::decodeInstruction(Cpu::Isa::InstructionBytes{0xFF, 0x00, 0x00, 0x00}).has_value());
+	EXPECT_FALSE(Cpu::Isa::decodeInstruction(Cpu::Isa::InstructionBytes{0xDD, 0x00, 0x00, 0x00}).has_value());
 }
 
 TEST(CodecTests, EncodesProgramInOrder)
