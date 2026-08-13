@@ -1,10 +1,13 @@
-﻿#include "Emulator.h"
+#include "Emulator.h"
 
 #include <iostream>
 #include <sstream>
 
 #include "Executor.h"
 #include "Tracer.h"
+#include "BusRouter.h"
+
+#include "Devices/OutputDevice.h"
 #include "Cpu/Isa/Codec.h"
 
 namespace Emulator {
@@ -29,9 +32,13 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 	Ram ram(ramSize, warnUninit, clearStack);
 	ram.SetTraceEnabled(ramTraceEnabled, ramIntervals);
 
+	BusRouter bus(ram);
+	OutputDevice outputDev(bus);
+
+	bus.RegisterDevice(&outputDev);
 	uint32_t tick = 1;
 	for (size_t i = 0; i < bytecode.size(); ++i) {
-		ram.WriteByte(static_cast<uint32_t>(i), bytecode[i], 0);
+		bus.WriteByte(static_cast<uint32_t>(i), bytecode[i], 0);
 	}
 	CpuState state;
 	state.SetInstructionPointer(0);
@@ -43,7 +50,7 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 
 		Cpu::Isa::InstructionBytes bytes;
 		for (uint32_t offset = 0; offset < 4; ++offset) {
-			bytes[offset] = ram.ReadByte(currentIp + offset, tick);
+			bytes[offset] = bus.ReadByte(currentIp + offset, tick);
 		}
 
 		auto instrOpt = Cpu::Isa::decodeInstruction(bytes);
@@ -63,7 +70,7 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 		}
 		const auto& instruction = *instrOpt;
 		tracer.SaveStateBefore(state, instruction);
-		auto status = executor.Execute(state, ram, tracer, instruction, tick);
+		auto status = executor.Execute(state, bus, tracer, instruction, tick);
 		// Ошибка выполнения инструкции
 		if (status != ExecutionStatus::Success) {
 			uint32_t cause = 0;

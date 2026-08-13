@@ -17,12 +17,12 @@ namespace {
 	}
 }
 
-ExecutionStatus Executor::Execute(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick) const
+ExecutionStatus Executor::Execute(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick) const
 {
 	const auto opcode = static_cast<uint8_t>(instruction.opcode);
 	CPU_ASSERT(opcode < m_Handlers.size(), "Opcode value exceeds handlers array boundary!");
 
-	auto status = m_Handlers[opcode](state, ram, tracer, instruction, tick);
+	auto status = m_Handlers[opcode](state, bus, tracer, instruction, tick);
 
 	if (status == ExecutionStatus::Success) {
 		state.AdvanceInstructionPointer();
@@ -78,68 +78,68 @@ constexpr std::array<Executor::Handler, 256> Executor::CreateHandlersMap()
 	return handlers;
 }
 
-ExecutionStatus Executor::ExecuteIllegal(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteIllegal(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	(void)state;
 	(void)instruction;
 	return ExecutionStatus::IllegalInstruction;
 }
 
-ExecutionStatus Executor::ExecuteLi(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteLi(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	state.SetRegister(instruction.a, instruction.immediate16());
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteLui(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteLui(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	state.SetRegister(instruction.a, (state.GetRegister(instruction.a) & 0x0000FFFF) | (static_cast<uint32_t>(instruction.immediate16()) << 16));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteAdd(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteAdd(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) + state.GetRegister(instruction.c));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSub(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSub(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) - state.GetRegister(instruction.c));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteAnd(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteAnd(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) & state.GetRegister(instruction.c));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteOr(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteOr(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) | state.GetRegister(instruction.c));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteXor(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteXor(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) ^ state.GetRegister(instruction.c));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSll(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSll(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) << (state.GetRegister(instruction.c) & 0x1F));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSrl(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSrl(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) >> (state.GetRegister(instruction.c) & 0x1F));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSra(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSra(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	//state.SetRegister(instruction.a, static_cast<int32_t>(state.GetRegister(instruction.b)) >> (state.GetRegister(instruction.c) & 0x1F));
 
@@ -159,13 +159,13 @@ ExecutionStatus Executor::ExecuteSra(CpuState& state, Ram& ram, Tracer& tracer, 
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteMul(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteMul(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) * state.GetRegister(instruction.c));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteUdiv(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteUdiv(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	uint32_t divisor = state.GetRegister(instruction.c);
 	if (divisor == 0) {
@@ -175,7 +175,7 @@ ExecutionStatus Executor::ExecuteUdiv(CpuState& state, Ram& ram, Tracer& tracer,
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSdiv(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSdiv(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	int32_t valB = static_cast<int32_t>(state.GetRegister(instruction.b));
 	int32_t valC = static_cast<int32_t>(state.GetRegister(instruction.c));
@@ -186,67 +186,67 @@ ExecutionStatus Executor::ExecuteSdiv(CpuState& state, Ram& ram, Tracer& tracer,
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteLdb(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteLdb(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	uint32_t addr = state.GetRegister(instruction.b) + instruction.immediate16();
-	if (!ram.IsValidRange(addr, 1)) {
+	if (!bus.IsValidRange(addr, 1)) {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
-	state.SetRegister(instruction.a, ram.ReadByte(addr, tick));
+	state.SetRegister(instruction.a, bus.ReadByte(addr, tick));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteLdh(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteLdh(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	uint32_t addr = state.GetRegister(instruction.b) + instruction.immediate16();
-	if (!ram.IsValidRange(addr, 2)) {
+	if (!bus.IsValidRange(addr, 2)) {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
-	state.SetRegister(instruction.a, ram.ReadHalfword(addr, tick));
+	state.SetRegister(instruction.a, bus.ReadHalfword(addr, tick));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteLdw(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteLdw(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	uint32_t addr = state.GetRegister(instruction.b) + instruction.immediate16();
-	if (!ram.IsValidRange(addr, 4)) {
+	if (!bus.IsValidRange(addr, 4)) {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
-	state.SetRegister(instruction.a, ram.ReadWord(addr, tick));
+	state.SetRegister(instruction.a, bus.ReadWord(addr, tick));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteStb(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteStb(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	uint32_t addr = state.GetRegister(instruction.b) + instruction.immediate16();
-	if (!ram.IsValidRange(addr, 1)) {
+	if (!bus.IsValidRange(addr, 1)) {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
-	ram.WriteByte(addr, static_cast<uint8_t>(state.GetRegister(instruction.a) & 0xFF), tick);
+	bus.WriteByte(addr, static_cast<uint8_t>(state.GetRegister(instruction.a) & 0xFF), tick);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSth(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSth(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	uint32_t addr = state.GetRegister(instruction.b) + instruction.immediate16();
-	if (!ram.IsValidRange(addr, 2)) {
+	if (!bus.IsValidRange(addr, 2)) {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
-	ram.WriteHalfword(addr, static_cast<uint16_t>(state.GetRegister(instruction.a) & 0xFFFF), tick);
+	bus.WriteHalfword(addr, static_cast<uint16_t>(state.GetRegister(instruction.a) & 0xFFFF), tick);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteStw(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteStw(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	uint32_t addr = state.GetRegister(instruction.b) + instruction.immediate16();
-	if (!ram.IsValidRange(addr, 4)) {
+	if (!bus.IsValidRange(addr, 4)) {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
-	ram.WriteWord(addr, state.GetRegister(instruction.a), tick);
+	bus.WriteWord(addr, state.GetRegister(instruction.a), tick);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSxt(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSxt(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	uint32_t val = state.GetRegister(instruction.b);
 	uint32_t imm = instruction.c;
@@ -265,7 +265,7 @@ ExecutionStatus Executor::ExecuteSxt(CpuState& state, Ram& ram, Tracer& tracer, 
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteBswap(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteBswap(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	uint32_t val = state.GetRegister(instruction.b);
 	uint32_t imm = instruction.c;
@@ -285,7 +285,7 @@ ExecutionStatus Executor::ExecuteBswap(CpuState& state, Ram& ram, Tracer& tracer
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteScrw(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteScrw(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	if (!state.IsValidScr(instruction.a)) {
 		return ExecutionStatus::InvalidScrIndex;
@@ -294,7 +294,7 @@ ExecutionStatus Executor::ExecuteScrw(CpuState& state, Ram& ram, Tracer& tracer,
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteScrr(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteScrr(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	if (!state.IsValidScr(instruction.b)) {
 		return ExecutionStatus::InvalidScrIndex;
@@ -303,7 +303,7 @@ ExecutionStatus Executor::ExecuteScrr(CpuState& state, Ram& ram, Tracer& tracer,
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteAspi(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteAspi(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	int16_t sI = static_cast<int16_t>(instruction.immediate16());
 	uint32_t spSize = state.GetScr(2);
@@ -312,7 +312,7 @@ ExecutionStatus Executor::ExecuteAspi(CpuState& state, Ram& ram, Tracer& tracer,
 	}
 	uint32_t spTop = state.GetScr(1);
 	if (sI > 0) {
-		ram.FreeMemoryRegion(spTop, static_cast<uint32_t>(sI));
+		bus.FreeMemoryRegion(spTop, static_cast<uint32_t>(sI));
 	}
 	state.SetScr(1, spTop + sI);
 	state.SetScr(2, spSize + sI);
@@ -320,7 +320,7 @@ ExecutionStatus Executor::ExecuteAspi(CpuState& state, Ram& ram, Tracer& tracer,
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteAspr(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteAspr(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	int32_t sI = static_cast<int32_t>(state.GetRegister(instruction.b));
 	uint32_t spSize = state.GetScr(2);
@@ -329,7 +329,7 @@ ExecutionStatus Executor::ExecuteAspr(CpuState& state, Ram& ram, Tracer& tracer,
 	}
 	uint32_t spTop = state.GetScr(1);
 	if (sI > 0) {
-		ram.FreeMemoryRegion(spTop, static_cast<uint32_t>(sI));
+		bus.FreeMemoryRegion(spTop, static_cast<uint32_t>(sI));
 	}
 	state.SetScr(1, spTop + sI);
 	state.SetScr(2, spSize + sI);
@@ -337,7 +337,7 @@ ExecutionStatus Executor::ExecuteAspr(CpuState& state, Ram& ram, Tracer& tracer,
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteRjmp(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteRjmp(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	int16_t offset = static_cast<int16_t>(instruction.immediate16());
 	// Поскольку Execute() увеличивает IP на 4 после успешного выполнения,
@@ -346,7 +346,7 @@ ExecutionStatus Executor::ExecuteRjmp(CpuState& state, Ram& ram, Tracer& tracer,
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteBrz(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteBrz(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	if (state.GetRegister(instruction.a) == 0) {
 		int16_t offset = static_cast<int16_t>(instruction.immediate16());
@@ -355,7 +355,7 @@ ExecutionStatus Executor::ExecuteBrz(CpuState& state, Ram& ram, Tracer& tracer, 
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteBrnz(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteBrnz(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	if (state.GetRegister(instruction.a) != 0) {
 		int16_t offset = static_cast<int16_t>(instruction.immediate16());
@@ -364,13 +364,13 @@ ExecutionStatus Executor::ExecuteBrnz(CpuState& state, Ram& ram, Tracer& tracer,
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteAjmp(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteAjmp(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	state.SetInstructionPointer(state.GetRegister(instruction.a) - 4);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteCall(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteCall(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	// Сохраняем адрес следующей инструкции в R1
 	state.SetRegister(1, state.InstructionPointer() + 4);
@@ -378,38 +378,38 @@ ExecutionStatus Executor::ExecuteCall(CpuState& state, Ram& ram, Tracer& tracer,
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteRih(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteRih(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	// IP = IIP (с учетом последующего Advance (+4) в Executor::Execute)
 	state.SetInstructionPointer(state.GetScr(3) - 4);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteEq(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteEq(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) == state.GetRegister(instruction.c) ? 1 : 0);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteNe(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteNe(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) != state.GetRegister(instruction.c) ? 1 : 0);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteLt(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteLt(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) < state.GetRegister(instruction.c) ? 1 : 0);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteGe(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteGe(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	state.SetRegister(instruction.a, state.GetRegister(instruction.b) >= state.GetRegister(instruction.c) ? 1 : 0);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSlt(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSlt(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	int32_t valB = static_cast<int32_t>(state.GetRegister(instruction.b));
 	int32_t valC = static_cast<int32_t>(state.GetRegister(instruction.c));
@@ -417,14 +417,14 @@ ExecutionStatus Executor::ExecuteSlt(CpuState& state, Ram& ram, Tracer& tracer, 
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSge(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSge(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	int32_t valB = static_cast<int32_t>(state.GetRegister(instruction.b));
 	int32_t valC = static_cast<int32_t>(state.GetRegister(instruction.c));
 	state.SetRegister(instruction.a, valB >= valC ? 1 : 0);
 	return ExecutionStatus::Success;
 }
-ExecutionStatus Executor::ExecuteSimCtrl(CpuState& state, Ram& ram, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSimCtrl(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
     // Команды вида 0xFF 0xFF <sub_opcode> <c>
     if (instruction.a == 0xFF) {
