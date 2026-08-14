@@ -51,7 +51,7 @@ TEST(EmulatorTests, RejectsInvalidBytecodeSize)
 TEST(EmulatorTests, RejectsUnknownOpcode)
 {
 	const Cpu::Bytecode bytecode{
-		0xFF,
+		0xFE,
 		0x00,
 		0x00,
 		0x00,

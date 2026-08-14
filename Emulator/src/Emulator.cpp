@@ -100,6 +100,14 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 		const auto& instruction = *instrOpt;
 		tracer.SaveStateBefore(state, instruction);
 		auto status = executor.Execute(state, bus, tracer, instruction, tick);
+		if (status == ExecutionStatus::HaltedPassed) {
+			tracer.TraceStep(state, instruction);
+			return EmulatorResult{state, true, ""};
+		}
+		if (status == ExecutionStatus::HaltedFailed) {
+			tracer.TraceStep(state, instruction);
+			return EmulatorResult{state, false, "program halted with failure status"};
+		}
 		// Ошибка выполнения инструкции
 		if (status != ExecutionStatus::Success) {
 			uint32_t cause = 0;

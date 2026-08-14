@@ -30,6 +30,10 @@ inline std::string_view ToString(ExecutionStatus status)
 			return "stack overflow";
 		case ExecutionStatus::InvalidScrIndex:
 			return "invalid SCR index";
+		case ExecutionStatus::HaltedFailed:
+			return "halted failed";
+		case ExecutionStatus::HaltedPassed:
+			return "halted passed";
 	}
 	return "unknown error";
 }

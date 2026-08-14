@@ -209,8 +209,12 @@ std::vector<Cpu::Isa::Instruction> SemanticAnalyzer::Analyze(
 						immediate = static_cast<uint16_t>(static_cast<int16_t>(offset));
 					}
 				}
-				instruction.b = static_cast<uint8_t>(immediate & 0x00FF);
-				instruction.c = static_cast<uint8_t>((immediate >> 8) & 0x00FF);
+				if (index == 2) {
+					instruction.c = static_cast<uint8_t>(immediate & 0x00FF);
+				} else {
+					instruction.b = static_cast<uint8_t>(immediate & 0x00FF);
+					instruction.c = static_cast<uint8_t>((immediate >> 8) & 0x00FF);
+				}
 			}
 		}
 		if (parsed.Mnemonic == "_SIM_GET_TICK") {

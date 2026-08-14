@@ -188,7 +188,7 @@ ExecutionStatus Executor::ExecuteSdiv(CpuState& state, BusRouter& bus, Tracer& t
 
 ExecutionStatus Executor::ExecuteLdb(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
-	uint32_t addr = state.GetRegister(instruction.b) + instruction.immediate16();
+	uint32_t addr = state.GetRegister(instruction.b) + instruction.c;
 	if (!bus.IsValidRange(addr, 1)) {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
@@ -198,7 +198,7 @@ ExecutionStatus Executor::ExecuteLdb(CpuState& state, BusRouter& bus, Tracer& tr
 
 ExecutionStatus Executor::ExecuteLdh(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
-	uint32_t addr = state.GetRegister(instruction.b) + instruction.immediate16();
+	uint32_t addr = state.GetRegister(instruction.b) + instruction.c;
 	if (!bus.IsValidRange(addr, 2)) {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
@@ -208,7 +208,7 @@ ExecutionStatus Executor::ExecuteLdh(CpuState& state, BusRouter& bus, Tracer& tr
 
 ExecutionStatus Executor::ExecuteLdw(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
-	uint32_t addr = state.GetRegister(instruction.b) + instruction.immediate16();
+	uint32_t addr = state.GetRegister(instruction.b) + instruction.c;
 	if (!bus.IsValidRange(addr, 4)) {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
@@ -218,7 +218,7 @@ ExecutionStatus Executor::ExecuteLdw(CpuState& state, BusRouter& bus, Tracer& tr
 
 ExecutionStatus Executor::ExecuteStb(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
-	uint32_t addr = state.GetRegister(instruction.b) + instruction.immediate16();
+	uint32_t addr = state.GetRegister(instruction.b) + instruction.c;
 	if (!bus.IsValidRange(addr, 1)) {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
@@ -228,7 +228,7 @@ ExecutionStatus Executor::ExecuteStb(CpuState& state, BusRouter& bus, Tracer& tr
 
 ExecutionStatus Executor::ExecuteSth(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
-	uint32_t addr = state.GetRegister(instruction.b) + instruction.immediate16();
+	uint32_t addr = state.GetRegister(instruction.b) + instruction.c;
 	if (!bus.IsValidRange(addr, 2)) {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
@@ -238,7 +238,7 @@ ExecutionStatus Executor::ExecuteSth(CpuState& state, BusRouter& bus, Tracer& tr
 
 ExecutionStatus Executor::ExecuteStw(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
-	uint32_t addr = state.GetRegister(instruction.b) + instruction.immediate16();
+	uint32_t addr = state.GetRegister(instruction.b) + instruction.c;
 	if (!bus.IsValidRange(addr, 4)) {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
