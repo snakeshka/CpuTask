@@ -6,6 +6,8 @@ add_library(EmulatorInternal OBJECT
     src/Ram.cpp
     src/BusRouter.cpp
     src/Devices/OutputDevice.cpp
+    src/Devices/PicDevice.cpp
+    src/Devices/TimerDevice.cpp
 )
 
 target_include_directories(EmulatorInternal PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)

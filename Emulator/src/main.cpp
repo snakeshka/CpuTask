@@ -163,6 +163,9 @@ int main(int argc, char* argv[])
 	bool ramTraceEnabled = false;
 	std::vector<Emulator::AddrInterval> ramIntervals;
 
+	bool tracePicEnabled = false;
+	bool traceIntEnabled = false;
+
 	bool clearStack = false;
 
 	for (int i = 1; i < argc; ++i) {
@@ -181,6 +184,12 @@ int main(int argc, char* argv[])
 			}
 			if (sub.find("disasm") != std::string_view::npos) {
 				traceEnabled = true;
+			}
+			if (sub.find("pic") != std::string_view::npos) {
+				tracePicEnabled = true;
+			}
+			if (sub.find("int") != std::string_view::npos) {
+				traceIntEnabled = true;
 			}
 		} else if (arg.starts_with("--trace-ram-addrs=")) {
 			ramTraceEnabled = true;
@@ -213,7 +222,9 @@ int main(int argc, char* argv[])
 		warnUninit,
 		ramIntervals,
 		ramTraceEnabled,
-		clearStack);
+		clearStack,
+		traceIntEnabled,
+		tracePicEnabled);
 	if (!result.Success) {
 		std::cerr << "error: " << result.Error << '\n';
 		return 1;

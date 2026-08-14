@@ -8,6 +8,9 @@
 #include "BusRouter.h"
 
 #include "Devices/OutputDevice.h"
+#include "Devices/TimerDevice.h"
+#include "Devices/PicDevice.h"
+
 #include "Cpu/Isa/Codec.h"
 
 namespace Emulator {
@@ -19,7 +22,8 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
                              std::vector<AddrInterval> ramIntervals,
                              bool ramTraceEnabled,
                              bool clearStack,
-                             bool traceIntEnabled) const
+                             bool traceIntEnabled,
+							 bool tracePicEnabled) const
 {
 	if (bytecode.size() % 4 != 0) {
 		return EmulatorResult{CpuState{}, false, "invalid bytecode size"};
@@ -33,9 +37,18 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 	ram.SetTraceEnabled(ramTraceEnabled, ramIntervals);
 
 	BusRouter bus(ram);
+	PicDevice pic(tracePicEnabled);
+	TimerDevice timer;
 	OutputDevice outputDev(bus);
 
+	timer.SetInterruptCallback([&pic](uint8_t vector, uint32_t currentTick) {
+		pic.Push(vector, currentTick);
+	});
+
 	bus.RegisterDevice(&outputDev);
+	bus.RegisterDevice(&timer);
+	bus.RegisterDevice(&pic);
+
 	uint32_t tick = 1;
 	for (size_t i = 0; i < bytecode.size(); ++i) {
 		bus.WriteByte(static_cast<uint32_t>(i), bytecode[i], 0);
@@ -43,9 +56,25 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 	CpuState state;
 	state.SetInstructionPointer(0);
 	Executor executor;
-	Tracer tracer(traceEnabled, std::move(traceIntervals));
+	Tracer tracer(traceEnabled, std::move(traceIntervals), traceIntEnabled);
 
 	while (state.InstructionPointer() < bytecode.size()) {
+		bus.Tick(tick);
+
+		if (pic.HasPendingInterrupt() && state.GetScr(5) != 0) { // IHR != 0
+			uint32_t currentIp = state.InstructionPointer();
+			pic.AcknowledgeInterrupt();
+			state.SetScr(3, currentIp); // IIP = IP
+			state.SetScr(4, 3);         // ICR = 3 (External Interrupt)
+			uint32_t ihr = state.GetScr(5);
+		
+			tracer.TraceInterrupt(tick, currentIp, 3, ihr);
+		
+			state.SetInstructionPointer(ihr);
+			tick++;
+			continue;
+		}
+
 		uint32_t currentIp = state.InstructionPointer();
 
 		Cpu::Isa::InstructionBytes bytes;

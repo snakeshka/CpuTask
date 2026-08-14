@@ -38,6 +38,8 @@ add_executable(UnitTests
     Emulator/BusRouterTests.cpp
 
     Emulator/DevicesTests/OutputDeviceTests.cpp
+    Emulator/DevicesTests/TimerDeviceTests.cpp
+    Emulator/DevicesTests/PicDeviceTests.cpp
 )
 
 target_include_directories(UnitTests

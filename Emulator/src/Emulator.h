@@ -27,6 +27,7 @@ public:
 		std::vector<AddrInterval> ramIntervals = {},
 		bool ramTraceEnabled = false,
 		bool clearStack = false,
-		bool traceIntEnabled = false) const;
+		bool traceIntEnabled = false,
+		bool tracePicEnabled = false) const;
 };
 }
