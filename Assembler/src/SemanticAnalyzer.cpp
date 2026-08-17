@@ -121,24 +121,20 @@ std::vector<Cpu::Isa::Instruction> SemanticAnalyzer::Analyze(
 					ok = false;
 					continue;
 				}
-				uint8_t scrIndex = 0;
-				if (operand.Text == "IP")
-					scrIndex = 0;
-				else if (operand.Text == "SP_TOP")
-					scrIndex = 1;
-				else if (operand.Text == "SP_SIZE")
-					scrIndex = 2;
-				else if (operand.Text == "IIP")
-					scrIndex = 3;
-				else if (operand.Text == "ICR")
-					scrIndex = 4;
-				else if (operand.Text == "IHR")
-					scrIndex = 5;
-				else {
+				static const std::unordered_map<std::string_view, uint8_t> systemRegisters = {
+					{"IP", 0},
+					{"SP_TOP", 1},
+					{"SP_SIZE", 2},
+					{"IIP", 3},
+					{"ICR", 4},
+					{"IHR", 5}};
+				auto it = systemRegisters.find(operand.Text);
+				if (it == systemRegisters.end()) {
 					diagnostics.Add(Diagnostic{DiagnosticSeverity::Error, DiagnosticCode::InvalidRegister, operand.Range, "invalid system register \"" + operand.Text + "\""});
 					ok = false;
 					continue;
 				}
+				uint8_t scrIndex = it->second;
 				if (index == 0)
 					instruction.a = scrIndex;
 				else if (index == 1)
@@ -219,16 +215,16 @@ std::vector<Cpu::Isa::Instruction> SemanticAnalyzer::Analyze(
 		}
 		if (parsed.Mnemonic == "_SIM_GET_TICK") {
             instruction.c = instruction.a;
-            instruction.a = 0xFF;
-            instruction.b = 0x01;
+			instruction.a = Cpu::Isa::SimCtrlPrefix;
+			instruction.b = static_cast<uint8_t>(Cpu::Isa::SimCtrlSubOpcode::GetTick);
         } else if (parsed.Mnemonic == "_SIM_TRACE_DISASM") {
             instruction.c = instruction.a;
-            instruction.a = 0xFF;
-            instruction.b = 0x02;
+			instruction.a = Cpu::Isa::SimCtrlPrefix;
+			instruction.b = static_cast<uint8_t>(Cpu::Isa::SimCtrlSubOpcode::TraceDisasm);
         } else if (parsed.Mnemonic == "_SIM_HALTR") {
             instruction.c = instruction.a;
-            instruction.a = 0xFF;
-            instruction.b = 0x00;
+			instruction.a = Cpu::Isa::SimCtrlPrefix;
+			instruction.b = static_cast<uint8_t>(Cpu::Isa::SimCtrlSubOpcode::Haltr);
         } else if (parsed.Mnemonic == "_SIM_HALTI") {
             instruction.a = 0x00;
         }

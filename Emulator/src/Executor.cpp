@@ -306,16 +306,16 @@ ExecutionStatus Executor::ExecuteScrr(CpuState& state, BusRouter& bus, Tracer& t
 ExecutionStatus Executor::ExecuteAspi(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	int16_t sI = static_cast<int16_t>(instruction.immediate16());
-	uint32_t spSize = state.GetScr(2);
+	uint32_t spSize = state.GetScr(SystemRegister::SP_SIZE);
 	if (sI < 0 && spSize < static_cast<uint32_t>(-sI)) {
 		return ExecutionStatus::StackOverflow;
 	}
-	uint32_t spTop = state.GetScr(1);
+	uint32_t spTop = state.GetScr(SystemRegister::SP_TOP);
 	if (sI > 0) {
 		bus.FreeMemoryRegion(spTop, static_cast<uint32_t>(sI));
 	}
-	state.SetScr(1, spTop + sI);
-	state.SetScr(2, spSize + sI);
+	state.SetScr(SystemRegister::SP_TOP, spTop + sI);
+	state.SetScr(SystemRegister::SP_SIZE, spSize + sI);
 	state.SetRegister(instruction.a, spTop + sI);
 	return ExecutionStatus::Success;
 }
@@ -323,16 +323,16 @@ ExecutionStatus Executor::ExecuteAspi(CpuState& state, BusRouter& bus, Tracer& t
 ExecutionStatus Executor::ExecuteAspr(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	int32_t sI = static_cast<int32_t>(state.GetRegister(instruction.b));
-	uint32_t spSize = state.GetScr(2);
+	uint32_t spSize = state.GetScr(SystemRegister::SP_SIZE);
 	if (sI < 0 && spSize < static_cast<uint32_t>(-sI)) {
 		return ExecutionStatus::StackOverflow;
 	}
-	uint32_t spTop = state.GetScr(1);
+	uint32_t spTop = state.GetScr(SystemRegister::SP_TOP);
 	if (sI > 0) {
 		bus.FreeMemoryRegion(spTop, static_cast<uint32_t>(sI));
 	}
-	state.SetScr(1, spTop + sI);
-	state.SetScr(2, spSize + sI);
+	state.SetScr(SystemRegister::SP_TOP, spTop + sI);
+	state.SetScr(SystemRegister::SP_SIZE, spSize + sI);
 	state.SetRegister(instruction.a, spTop + sI);
 	return ExecutionStatus::Success;
 }
@@ -340,9 +340,9 @@ ExecutionStatus Executor::ExecuteAspr(CpuState& state, BusRouter& bus, Tracer& t
 ExecutionStatus Executor::ExecuteRjmp(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	int16_t offset = static_cast<int16_t>(instruction.immediate16());
-	// Поскольку Execute() увеличивает IP на 4 после успешного выполнения,
-	// вычитаем 4 из целевого IP, чтобы компенсировать этот шаг.
-	state.SetInstructionPointer(state.InstructionPointer() + offset * 4 - 4);
+	// Поскольку Execute() увеличивает IP на CpuState::InstructionSize после успешного выполнения,
+	// вычитаем CpuState::InstructionSize из целевого IP, чтобы компенсировать этот шаг.
+	state.SetInstructionPointer(state.InstructionPointer() + offset * CpuState::InstructionSize - CpuState::InstructionSize);
 	return ExecutionStatus::Success;
 }
 
@@ -350,7 +350,7 @@ ExecutionStatus Executor::ExecuteBrz(CpuState& state, BusRouter& bus, Tracer& tr
 {
 	if (state.GetRegister(instruction.a) == 0) {
 		int16_t offset = static_cast<int16_t>(instruction.immediate16());
-		state.SetInstructionPointer(state.InstructionPointer() + offset * 4 - 4);
+		state.SetInstructionPointer(state.InstructionPointer() + offset * CpuState::InstructionSize - CpuState::InstructionSize);
 	}
 	return ExecutionStatus::Success;
 }
@@ -359,14 +359,14 @@ ExecutionStatus Executor::ExecuteBrnz(CpuState& state, BusRouter& bus, Tracer& t
 {
 	if (state.GetRegister(instruction.a) != 0) {
 		int16_t offset = static_cast<int16_t>(instruction.immediate16());
-		state.SetInstructionPointer(state.InstructionPointer() + offset * 4 - 4);
+		state.SetInstructionPointer(state.InstructionPointer() + offset * CpuState::InstructionSize - CpuState::InstructionSize);
 	}
 	return ExecutionStatus::Success;
 }
 
 ExecutionStatus Executor::ExecuteAjmp(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
-	state.SetInstructionPointer(state.GetRegister(instruction.a) - 4);
+	state.SetInstructionPointer(state.GetRegister(instruction.a) - CpuState::InstructionSize);
 	return ExecutionStatus::Success;
 }
 
@@ -374,14 +374,14 @@ ExecutionStatus Executor::ExecuteCall(CpuState& state, BusRouter& bus, Tracer& t
 {
 	// Сохраняем адрес следующей инструкции в R1
 	state.SetRegister(1, state.InstructionPointer() + 4);
-	state.SetInstructionPointer(state.GetRegister(instruction.a) - 4);
+	state.SetInstructionPointer(state.GetRegister(instruction.a) - CpuState::InstructionSize);
 	return ExecutionStatus::Success;
 }
 
 ExecutionStatus Executor::ExecuteRih(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
 {
 	// IP = IIP (с учетом последующего Advance (+4) в Executor::Execute)
-	state.SetInstructionPointer(state.GetScr(3) - 4);
+	state.SetInstructionPointer(state.GetScr(SystemRegister::IIP) - CpuState::InstructionSize);
 	return ExecutionStatus::Success;
 }
 

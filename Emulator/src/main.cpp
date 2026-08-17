@@ -155,18 +155,7 @@ int main(int argc, char* argv[])
 {
 	std::string programPath;
 
-	bool traceEnabled = false;
-	std::vector<Emulator::TickInterval> traceIntervals;
-
-	uint32_t ramSize = 65536;
-	bool warnUninit = false;
-	bool ramTraceEnabled = false;
-	std::vector<Emulator::AddrInterval> ramIntervals;
-
-	bool tracePicEnabled = false;
-	bool traceIntEnabled = false;
-
-	bool clearStack = false;
+	Emulator::EmulatorConfig config;
 
 	for (int i = 1; i < argc; ++i) {
 		std::string_view arg = argv[i];
@@ -174,31 +163,31 @@ int main(int argc, char* argv[])
 			std::string_view sizeStr = arg.substr(11);
 			uint32_t parsedSize = 0;
 			std::from_chars(sizeStr.data(), sizeStr.data() + sizeStr.size(), parsedSize);
-			ramSize = parsedSize;
+			config.Ram.Size = parsedSize;
 		} else if (arg == "--warn=uninit-ram") {
-			warnUninit = true;
+			config.Ram.WarnUninit = true;
 		} else if (arg.starts_with("--trace=")) {
 			std::string_view sub = arg.substr(8);
 			if (sub.find("ram-wr") != std::string_view::npos) {
-				ramTraceEnabled = true;
+				config.Ram.TraceEnabled = true;
 			}
 			if (sub.find("disasm") != std::string_view::npos) {
-				traceEnabled = true;
+				config.Trace.Disasm = true;
 			}
 			if (sub.find("pic") != std::string_view::npos) {
-				tracePicEnabled = true;
+				config.Trace.Pic = true;
 			}
 			if (sub.find("int") != std::string_view::npos) {
-				traceIntEnabled = true;
+				config.Trace.Interrupts = true;
 			}
 		} else if (arg.starts_with("--trace-ram-addrs=")) {
-			ramTraceEnabled = true;
-			ramIntervals = parseAddrIntervals(arg.substr(18));
+			config.Ram.TraceEnabled = true;
+			config.Ram.TraceIntervals = parseAddrIntervals(arg.substr(18));
 		} else if (arg.starts_with("--trace-ticks=")) {
-			traceEnabled = true;
-			traceIntervals = parseTraceTicks(arg.substr(14));
+			config.Trace.Disasm = true;
+			config.Trace.Intervals = parseTraceTicks(arg.substr(14));
 		} else if (arg == "--clear-stack") {
-			clearStack = true;
+			config.Ram.ClearStack = true;
 		} else {
 			programPath = arg;
 		}
@@ -214,17 +203,8 @@ int main(int argc, char* argv[])
 	}
 
 	Emulator::Emulator emulator;
-	const auto result = emulator.Run(
-		*bytecode,
-		traceEnabled,
-		traceIntervals,
-		ramSize,
-		warnUninit,
-		ramIntervals,
-		ramTraceEnabled,
-		clearStack,
-		traceIntEnabled,
-		tracePicEnabled);
+	const auto result = emulator.Run(*bytecode, config);
+
 	if (!result.Success) {
 		std::cerr << "error: " << result.Error << '\n';
 		return 1;

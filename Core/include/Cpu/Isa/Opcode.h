@@ -3,6 +3,15 @@
 #include <cstdint>
 
 namespace Cpu::Isa {
+enum class SimCtrlSubOpcode : uint8_t
+{
+	Haltr = 0x00,
+	GetTick = 0x01,
+	TraceDisasm = 0x02
+};
+
+constexpr uint8_t SimCtrlPrefix = 0xFF;
+
 enum class Opcode : uint8_t
 {
 	LI = 0x00,

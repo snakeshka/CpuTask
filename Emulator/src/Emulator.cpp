@@ -15,29 +15,21 @@
 
 namespace Emulator {
 EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
-                             bool traceEnabled,
-                             std::vector<TickInterval> traceIntervals,
-                             uint32_t ramSize,
-                             bool warnUninit,
-                             std::vector<AddrInterval> ramIntervals,
-                             bool ramTraceEnabled,
-                             bool clearStack,
-                             bool traceIntEnabled,
-							 bool tracePicEnabled) const
+							 const EmulatorConfig& config) const
 {
 	if (bytecode.size() % 4 != 0) {
 		return EmulatorResult{CpuState{}, false, "invalid bytecode size"};
 	}
 
-	if (bytecode.size() > ramSize) {
+	if (bytecode.size() > config.Ram.Size) {
 		return EmulatorResult{CpuState{}, false, "program size exceeds RAM size"};
 	}
 
-	Ram ram(ramSize, warnUninit, clearStack);
-	ram.SetTraceEnabled(ramTraceEnabled, ramIntervals);
+	Ram ram(config.Ram.Size, config.Ram.WarnUninit, config.Ram.ClearStack);
+	ram.SetTraceEnabled(config.Ram.TraceEnabled, config.Ram.TraceIntervals);
 
 	BusRouter bus(ram);
-	PicDevice pic(tracePicEnabled);
+	PicDevice pic(config.Trace.Pic);
 	TimerDevice timer;
 	OutputDevice outputDev(bus);
 
@@ -56,16 +48,16 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 	CpuState state;
 	state.SetInstructionPointer(0);
 	Executor executor;
-	Tracer tracer(traceEnabled, std::move(traceIntervals), traceIntEnabled);
+	Tracer tracer(config.Trace.Disasm, config.Trace.Intervals, config.Trace.Interrupts);
 
 	while (state.InstructionPointer() < bytecode.size()) {
 		bus.Tick(tick);
 
-		if (pic.HasPendingInterrupt() && state.GetScr(5) != 0) { // IHR != 0
+		if (pic.HasPendingInterrupt() && state.GetScr(SystemRegister::IHR) != 0) {
 			uint32_t currentIp = state.InstructionPointer();
 			pic.AcknowledgeInterrupt();
-			state.SetScr(3, currentIp); // IIP = IP
-			state.SetScr(4, 3);         // ICR = 3 (External Interrupt)
+			state.SetScr(SystemRegister::IIP, currentIp);
+			state.SetScr(SystemRegister::ICR, static_cast<uint8_t>(InterruptCause::ExternalInterrupt));
 			uint32_t ihr = state.GetScr(5);
 		
 			tracer.TraceInterrupt(tick, currentIp, 3, ihr);
@@ -77,18 +69,21 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 
 		uint32_t currentIp = state.InstructionPointer();
 
-		Cpu::Isa::InstructionBytes bytes;
-		for (uint32_t offset = 0; offset < 4; ++offset) {
-			bytes[offset] = bus.ReadByte(currentIp + offset, tick);
-		}
+		const uint32_t rawWord = bus.ReadWord(currentIp, tick);
+		const Cpu::Isa::InstructionBytes bytes = {
+			static_cast<Cpu::Byte>(rawWord & 0xFF),
+			static_cast<Cpu::Byte>((rawWord >> 8) & 0xFF),
+			static_cast<Cpu::Byte>((rawWord >> 16) & 0xFF),
+			static_cast<Cpu::Byte>((rawWord >> 24) & 0xFF),
+		};
 
 		auto instrOpt = Cpu::Isa::decodeInstruction(bytes);
 		// Ошибка декодирования (неизвестный опкод)
 		if (!instrOpt.has_value()) {
 			uint32_t cause = 0;             // Illegal Opcode
-			state.SetScr(3, currentIp);     // IIP = IP (сохраняем всегда)
-			state.SetScr(4, cause);         // ICR = 0
-			uint32_t ihr = state.GetScr(5); // IHR
+			state.SetScr(SystemRegister::IIP, currentIp);
+			state.SetScr(SystemRegister::ICR, cause);
+			uint32_t ihr = state.GetScr(SystemRegister::IHR);
 			if (ihr == 0) {
 				return EmulatorResult{state, false, "unhandled illegal opcode at address 0x" + std::string(1, currentIp)};
 			}
@@ -125,9 +120,9 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 				return EmulatorResult{state, false, errorMsg.str()};
 			}
 			// Сохраняем IIP и ICR ВСЕГДА
-			state.SetScr(3, currentIp);     // IIP = IP
-			state.SetScr(4, cause);         // ICR = cause
-			uint32_t ihr = state.GetScr(5); // IHR
+			state.SetScr(SystemRegister::IIP, currentIp);
+			state.SetScr(SystemRegister::ICR, cause);
+			uint32_t ihr = state.GetScr(SystemRegister::IHR);
 			if (ihr == 0) {
 				auto formatOpt = Cpu::Isa::findInstructionByOpcode(instruction.opcode);
 				std::string mnemonic = formatOpt.has_value() ? std::string(formatOpt->mnemonic) : "UNKNOWN";
