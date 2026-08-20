@@ -21,9 +21,6 @@ public:
 
 	uint8_t ReadByte(uint32_t offset) override;
 	void WriteByte(uint32_t offset, uint8_t value) override;
-	
-	// Установки бита прерывания
-	void Push(uint8_t vector, uint32_t currentTick);
 
 	// Проверка на нераспределенные прерывания для ядра (MASK != 0 && !PEND)
 	bool HasPendingInterrupt() const { return m_Mask != 0 && !m_Pend; }

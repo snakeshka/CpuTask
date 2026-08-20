@@ -56,6 +56,7 @@ private:
 	static ExecutionStatus ExecuteAjmp(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
 	static ExecutionStatus ExecuteCall(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
 	static ExecutionStatus ExecuteRih(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteWait(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
 	static ExecutionStatus ExecuteEq(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
 	static ExecutionStatus ExecuteNe(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
 	static ExecutionStatus ExecuteLt(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);

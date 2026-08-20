@@ -30,6 +30,7 @@ public:
 		WriteHalfWord(offset + 2, (value >> 16) & 0xFFFF);
 	}
 
+	virtual uint32_t GetEventPeriod() const { return 0; }
 	virtual void Tick(uint32_t currentTick) { (void)currentTick; }
 };
 }

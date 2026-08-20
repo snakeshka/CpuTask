@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IDevice.h"
+#include "BusRouter.h"
 #include <functional>
 
 namespace Emulator {
@@ -11,7 +12,10 @@ public:
 	static constexpr uint32_t BaseAddr = 0xE010;
 	static constexpr uint32_t DeviceSize = 8;
 
-	TimerDevice() = default;
+	TimerDevice(BusRouter& busRouter)
+		: m_BusRouter(busRouter)
+	{
+	}
 
 	void SetInterruptCallback(InterruptCallback callback) {
 		m_InterruptCallback = std::move(callback);
@@ -33,14 +37,15 @@ public:
 			m_Cntd--;
 			if (m_Cntd == 0) {
 				m_Ctrl |= CtrlTrigMask; // TRIG = 1
-				if ((m_Ctrl & CtrlIeMask) != 0 && m_InterruptCallback) { // IE == 1
-					m_InterruptCallback(1, currentTick); // Запись вектор ID 1 в PIC
+				if ((m_Ctrl & CtrlIeMask) != 0) { // IE == 1
+					m_BusRouter.WriteByte(0xE024, 1, currentTick);		 // Запись вектор ID 1 в PIC
 				}
 			}
 		}
 	}
 
 private:
+	BusRouter& m_BusRouter;
 	uint32_t m_Cntd = 0;
 	uint8_t m_Ctrl = 0;
 	InterruptCallback m_InterruptCallback;

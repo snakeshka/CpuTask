@@ -6,6 +6,7 @@ namespace Emulator {
 enum class ExecutionStatus
 {
 	Success,
+	Wait,
 	DivisionByZero,
 	IllegalInstruction,
 	MemoryOutOfBounds,

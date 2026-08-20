@@ -87,6 +87,7 @@ inline constexpr std::array Instructions = {
 	InstructionFormat{"AJMP", Opcode::AJMP, ROperands},
 	InstructionFormat{"CALL", Opcode::CALL, ROperands},
 	InstructionFormat{"RIH", Opcode::RIH, NoOperands},
+	InstructionFormat{"WAIT", Opcode::WAIT, NoOperands},
 	InstructionFormat{"EQ", Opcode::EQ, RRROperands},
 	InstructionFormat{"NE", Opcode::NE, RRROperands},
 	InstructionFormat{"LT", Opcode::LT, RRROperands},

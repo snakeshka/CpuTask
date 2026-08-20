@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <string>
+#include <cstdint>
 
 namespace Assembler {
 enum class DiagnosticSeverity : uint8_t

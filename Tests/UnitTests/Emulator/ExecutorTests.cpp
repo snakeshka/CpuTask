@@ -468,3 +468,16 @@ TEST(ExecutorTests, ReturnsInvalidScrIndexStatus)
 
 	EXPECT_EQ(status, Emulator::ExecutionStatus::InvalidScrIndex);
 }
+
+TEST(ExecutorTests, ExecutesWaitInstruction)
+{
+	Emulator::CpuState state;
+	Emulator::Ram ram(65536);
+	Emulator::Tracer tracer(false);
+	Emulator::BusRouter bus(ram);
+	const Emulator::Executor executor;
+	// WAIT (0x36, 0, 0, 0)
+	auto status = executor.Execute(state, bus, tracer, Cpu::Isa::Instruction{Cpu::Isa::Opcode::WAIT, 0, 0, 0}, 1);
+	EXPECT_EQ(status, Emulator::ExecutionStatus::Wait);
+	EXPECT_EQ(state.InstructionPointer(), 4u); // IP продвинулся на следующую инструкцию
+}

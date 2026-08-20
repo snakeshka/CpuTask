@@ -24,7 +24,7 @@ ExecutionStatus Executor::Execute(CpuState& state, BusRouter& bus, Tracer& trace
 
 	auto status = m_Handlers[opcode](state, bus, tracer, instruction, tick);
 
-	if (status == ExecutionStatus::Success) {
+	if (status == ExecutionStatus::Success || status == ExecutionStatus::Wait) {
 		state.AdvanceInstructionPointer();
 	}
 
@@ -67,6 +67,7 @@ constexpr std::array<Executor::Handler, 256> Executor::CreateHandlersMap()
 	handlers[toIdx(Cpu::Isa::Opcode::AJMP)] = &Executor::ExecuteAjmp;
 	handlers[toIdx(Cpu::Isa::Opcode::CALL)] = &Executor::ExecuteCall;
 	handlers[toIdx(Cpu::Isa::Opcode::RIH)] = &Executor::ExecuteRih;
+	handlers[toIdx(Cpu::Isa::Opcode::WAIT)] = &Executor::ExecuteWait;
 	handlers[toIdx(Cpu::Isa::Opcode::EQ)] = &Executor::ExecuteEq;
 	handlers[toIdx(Cpu::Isa::Opcode::NE)] = &Executor::ExecuteNe;
 	handlers[toIdx(Cpu::Isa::Opcode::LT)] = &Executor::ExecuteLt;
@@ -383,6 +384,16 @@ ExecutionStatus Executor::ExecuteRih(CpuState& state, BusRouter& bus, Tracer& tr
 	// IP = IIP (с учетом последующего Advance (+4) в Executor::Execute)
 	state.SetInstructionPointer(state.GetScr(SystemRegister::IIP) - CpuState::InstructionSize);
 	return ExecutionStatus::Success;
+}
+
+ExecutionStatus Executor::ExecuteWait(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+{
+	(void)state;
+	(void)bus;
+	(void)tracer;
+	(void)instruction;
+	(void)tick;
+	return ExecutionStatus::Wait;
 }
 
 ExecutionStatus Executor::ExecuteEq(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)

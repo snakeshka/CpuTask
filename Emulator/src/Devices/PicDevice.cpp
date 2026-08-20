@@ -31,21 +31,17 @@ uint8_t PicDevice::ReadByte(uint32_t offset) {
 }
 
 void PicDevice::WriteByte(uint32_t offset, uint8_t value) {
-	// Регистр PUSH по адресу 0xE024 (offset == 4)
-	if (offset == 4) {
-		Push(value, m_CurrentTick);
+	if (offset == 0) {	// POP
+		m_Pend = false;
+		return;
 	}
-}
-
-void PicDevice::Push(uint8_t vector, uint32_t currentTick) {
-	m_CurrentTick = currentTick;
-
-	if (vector < 32) {
-		m_Mask |= (1u << vector);
-	}
-
-	if (m_TracePic) {
-		std::cout << currentTick << " PUSH " << static_cast<uint32_t>(vector) << " MASK=" << m_Mask << '\n';
+	if (offset == 4) { // PUSH
+		if (value < 32) {
+			m_Mask |= (1u << value);
+		}
+		if (m_TracePic) {
+			std::cout << m_CurrentTick << " PUSH " << static_cast<uint32_t>(value) << " MASK=" << m_Mask << '\n';
+		}
 	}
 }
 

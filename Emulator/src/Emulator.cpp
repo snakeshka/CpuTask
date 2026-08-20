@@ -6,6 +6,7 @@
 #include "Executor.h"
 #include "Tracer.h"
 #include "BusRouter.h"
+#include "EventQueue.h"
 
 #include "Devices/OutputDevice.h"
 #include "Devices/TimerDevice.h"
@@ -30,12 +31,8 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 
 	BusRouter bus(ram);
 	PicDevice pic(config.Trace.Pic);
-	TimerDevice timer;
+	TimerDevice timer(bus);
 	OutputDevice outputDev(bus);
-
-	timer.SetInterruptCallback([&pic](uint8_t vector, uint32_t currentTick) {
-		pic.Push(vector, currentTick);
-	});
 
 	bus.RegisterDevice(&outputDev);
 	bus.RegisterDevice(&timer);
@@ -50,10 +47,19 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 	Executor executor;
 	Tracer tracer(config.Trace.Disasm, config.Trace.Intervals, config.Trace.Interrupts);
 
+	EventQueue eventQueue;
+	eventQueue.Schedule(outputDev.GetEventPeriod(), [&outputDev](uint32_t currentTick) -> uint32_t {
+		return outputDev.OnEvent(currentTick);
+	});
+
+	bool isWaiting = false;
+
 	while (state.InstructionPointer() < bytecode.size()) {
 		bus.Tick(tick);
+		eventQueue.ProcessEvents(tick);
 
 		if (pic.HasPendingInterrupt() && state.GetScr(SystemRegister::IHR) != 0) {
+			isWaiting = false;
 			uint32_t currentIp = state.InstructionPointer();
 			pic.AcknowledgeInterrupt();
 			state.SetScr(SystemRegister::IIP, currentIp);
@@ -63,6 +69,11 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 			tracer.TraceInterrupt(tick, currentIp, 3, ihr);
 		
 			state.SetInstructionPointer(ihr);
+			tick++;
+			continue;
+		}
+
+		if (isWaiting) {
 			tick++;
 			continue;
 		}
@@ -102,6 +113,12 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 		if (status == ExecutionStatus::HaltedFailed) {
 			tracer.TraceStep(state, instruction);
 			return EmulatorResult{state, false, "program halted with failure status"};
+		}
+		if (status == ExecutionStatus::Wait) {
+			tracer.TraceStep(state, instruction);
+			isWaiting = true;
+			tick++;
+			continue;
 		}
 		// Ошибка выполнения инструкции
 		if (status != ExecutionStatus::Success) {
