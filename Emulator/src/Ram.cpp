@@ -1,4 +1,5 @@
 #include "Ram.h"
+#include "Cpu/Common/Exeptions.h"
 #include <stdexcept>
 #include <iostream>
 #include <iomanip>
@@ -10,15 +11,18 @@ Ram::Ram(uint32_t maxSize, bool warnUninit, bool clearStack)
 	  , m_WarnUninit(warnUninit)
 	  , m_clearStack(clearStack)
 {
-	if (maxSize % 4 != 0) {
-		throw std::runtime_error("RAM size must be a multiple of 4 bytes!");
+	if (maxSize % 4 != 0) [[unlikely]] {
+		Cpu::Common::ThrowRuntimeError("RAM size must be a multiple of 4 bytes!");
 	}
+
+	uint32_t pageCount = (maxSize + PageSize - 1) / PageSize;
+	m_Pages.resize(pageCount);
 }
 
 void Ram::CheckBounds(uint32_t address) const
 {
-	if (address >= m_MaxSize) {
-		throw std::out_of_range("Internal error: unchecked RAM access at address 0x" + std::to_string(address));
+	if (address >= m_MaxSize) [[unlikely]] {
+		Cpu::Common::ThrowOutOfRange("Internal error: unchecked RAM access at address 0x" + std::to_string(address));
 	}
 }
 
@@ -57,20 +61,16 @@ uint8_t Ram::ReadByteInternal(uint32_t address, uint32_t tick)
 {
 	uint32_t pageIndex = address / PageSize;
 	uint32_t pageOffset = address % PageSize;
-	const auto it = m_Pages.find(pageIndex);
-	if (it == m_Pages.end()) {
-		if (m_WarnUninit) {
-			std::cerr << "[WARN] Tick " << std::dec << tick
-				<< ": Read uninitialized byte at RAM address 0x"
-				<< std::hex << address << "\n";
+	const auto& pagePtr = m_Pages[pageIndex];
+	if (!pagePtr) {
+		if (m_WarnUninit) [[unlikely]] {
+			LogUninitializedRead(address, tick);
 		}
 		return 0;
 	}
-	Page& page = *it->second;
-	if (m_WarnUninit && !page.initialized.test(pageOffset)) {
-		std::cerr << "[WARN] Tick " << std::dec << tick
-			<< ": Read uninitialized byte at RAM address 0x"
-			<< std::hex << address << "\n";
+	Page& page = *pagePtr;
+	if (m_WarnUninit && !page.initialized.test(pageOffset)) [[unlikely]] {
+		LogUninitializedRead(address, tick);
 	}
 	uint32_t cellIndex = pageOffset / 4;
 	uint32_t byteOffset = address % 4;
@@ -99,9 +99,9 @@ uint32_t Ram::ReadWord(uint32_t address, uint32_t tick)
 		uint32_t pageIndex = address / PageSize;
 		uint32_t cellIndex = (address % PageSize) / 4;
 
-		auto it = m_Pages.find(pageIndex);
-		if (it != m_Pages.end()) {
-			return it->second->cells[cellIndex];
+		const auto& pagePtr = m_Pages[pageIndex];
+		if (pagePtr) {
+			return pagePtr->cells[cellIndex];
 		}
 		return 0;
 	}
@@ -113,7 +113,7 @@ uint32_t Ram::ReadWord(uint32_t address, uint32_t tick)
 	return val;
 }
 
-void Ram::LogTrace(uint32_t cellAddr, uint32_t oldVal, uint32_t newVal, uint32_t tick) const
+CPU_NOINLINE void Ram::LogTrace(uint32_t cellAddr, uint32_t oldVal, uint32_t newVal, uint32_t tick) const
 {
 	if (tick != 0 && m_TraceEnabled && IsAddrTraceAllowed(cellAddr)) {
 		std::cout << std::dec << tick << " RAM [0x" << std::hex << std::nouppercase << std::setfill('0') << std::setw(8) << cellAddr
@@ -121,69 +121,94 @@ void Ram::LogTrace(uint32_t cellAddr, uint32_t oldVal, uint32_t newVal, uint32_t
 	}
 }
 
+CPU_NOINLINE void Ram::LogUninitializedRead(uint32_t address, uint32_t tick) const
+{
+	std::cerr << "[WARN] Tick " << std::dec << tick
+			  << ": Read uninitialized byte at RAM address 0x"
+			  << std::hex << address << "\n";
+}
+
 void Ram::WriteByte(uint32_t address, uint8_t value, uint32_t tick)
 {
 	CheckBounds(address);
-	uint32_t cellAddr = address & ~3;
-	uint32_t oldVal = ReadWord(cellAddr, tick);
-
-	WriteByteInternal(address, value);
-
-	uint32_t newVal = ReadWord(cellAddr, tick);
-	LogTrace(cellAddr, oldVal, newVal, tick);
+	if (m_TraceEnabled && tick != 0) [[unlikely]] {
+		uint32_t cellAddr = address & ~3;
+		uint32_t oldVal = ReadWord(cellAddr, tick);
+		WriteByteInternal(address, value);
+		uint32_t newVal = ReadWord(cellAddr, tick);
+		LogTrace(cellAddr, oldVal, newVal, tick);
+	} else {
+		WriteByteInternal(address, value);
+	}
 }
 
 void Ram::WriteHalfword(uint32_t address, uint16_t value, uint32_t tick)
 {
 	CheckBounds(address + 1);
-
-	uint32_t cell0Addr = address & ~3;
-	uint32_t cell1Addr = (address + 1) & ~3;
-
-	uint32_t oldCell0 = ReadWord(cell0Addr, tick);
-	uint32_t oldCell1 = (cell0Addr != cell1Addr) ? ReadWord(cell1Addr, tick) : 0;
-
-	WriteByteInternal(address, static_cast<uint8_t>(value & 0xFF));
-	WriteByteInternal(address + 1, static_cast<uint8_t>((value >> 8) & 0xFF));
-
-	uint32_t newCell0 = ReadWord(cell0Addr, tick);
-	uint32_t newCell1 = (cell0Addr != cell1Addr) ? ReadWord(cell1Addr, tick) : 0;
-
-	LogTrace(cell0Addr, oldCell0, newCell0, tick);
-	if (cell0Addr != cell1Addr) {
-		LogTrace(cell1Addr, oldCell1, newCell1, tick);
+	if (m_TraceEnabled && tick != 0) [[unlikely]] {
+		uint32_t cell0Addr = address & ~3;
+		uint32_t cell1Addr = (address + 1) & ~3;
+		uint32_t oldCell0 = ReadWord(cell0Addr, tick);
+		uint32_t oldCell1 = (cell0Addr != cell1Addr) ? ReadWord(cell1Addr, tick) : 0;
+		WriteByteInternal(address, static_cast<uint8_t>(value & 0xFF));
+		WriteByteInternal(address + 1, static_cast<uint8_t>((value >> 8) & 0xFF));
+		uint32_t newCell0 = ReadWord(cell0Addr, tick);
+		uint32_t newCell1 = (cell0Addr != cell1Addr) ? ReadWord(cell1Addr, tick) : 0;
+		LogTrace(cell0Addr, oldCell0, newCell0, tick);
+		if (cell0Addr != cell1Addr) {
+			LogTrace(cell1Addr, oldCell1, newCell1, tick);
+		}
+	} else {
+		WriteByteInternal(address, static_cast<uint8_t>(value & 0xFF));
+		WriteByteInternal(address + 1, static_cast<uint8_t>((value >> 8) & 0xFF));
 	}
 }
 
 void Ram::WriteWord(uint32_t address, uint32_t value, uint32_t tick)
 {
 	CheckBounds(address + 3);
-	uint32_t cell0Addr = address & ~3;
-	uint32_t cell1Addr = (address + 3) & ~3;
-	uint32_t oldCell0 = ReadWord(cell0Addr, tick);
-	uint32_t oldCell1 = (cell0Addr != cell1Addr) ? ReadWord(cell1Addr, tick) : 0;
-
-	if (address % 4 == 0) {
-		uint32_t pageIndex = address / PageSize;
-		uint32_t pageOffset = address % PageSize;
-		uint32_t cellIndex = pageOffset / 4;
-		Page& page = GetOrCreatePage(pageIndex);
-		page.cells[cellIndex] = value;
-
-		page.initialized.set(pageOffset);
-		page.initialized.set(pageOffset + 1);
-		page.initialized.set(pageOffset + 2);
-		page.initialized.set(pageOffset + 3);
-	} else {
-		for (uint32_t i = 0; i < 4; ++i) {
-			WriteByteInternal(address + i, static_cast<uint8_t>((value >> (i * 8)) & 0xFF));
+	if (m_TraceEnabled && tick != 0) [[unlikely]] {
+		uint32_t cell0Addr = address & ~3;
+		uint32_t cell1Addr = (address + 3) & ~3;
+		uint32_t oldCell0 = ReadWord(cell0Addr, tick);
+		uint32_t oldCell1 = (cell0Addr != cell1Addr) ? ReadWord(cell1Addr, tick) : 0;
+		if (address % 4 == 0) {
+			uint32_t pageIndex = address / PageSize;
+			uint32_t pageOffset = address % PageSize;
+			uint32_t cellIndex = pageOffset / 4;
+			Page& page = GetOrCreatePage(pageIndex);
+			page.cells[cellIndex] = value;
+			page.initialized.set(pageOffset);
+			page.initialized.set(pageOffset + 1);
+			page.initialized.set(pageOffset + 2);
+			page.initialized.set(pageOffset + 3);
+		} else {
+			for (uint32_t i = 0; i < 4; ++i) {
+				WriteByteInternal(address + i, static_cast<uint8_t>((value >> (i * 8)) & 0xFF));
+			}
 		}
-	}
-	uint32_t newCell0 = ReadWord(cell0Addr, tick);
-	uint32_t newCell1 = (cell0Addr != cell1Addr) ? ReadWord(cell1Addr, tick) : 0;
-	LogTrace(cell0Addr, oldCell0, newCell0, tick);
-	if (cell0Addr != cell1Addr) {
-		LogTrace(cell1Addr, oldCell1, newCell1, tick);
+		uint32_t newCell0 = ReadWord(cell0Addr, tick);
+		uint32_t newCell1 = (cell0Addr != cell1Addr) ? ReadWord(cell1Addr, tick) : 0;
+		LogTrace(cell0Addr, oldCell0, newCell0, tick);
+		if (cell0Addr != cell1Addr) {
+			LogTrace(cell1Addr, oldCell1, newCell1, tick);
+		}
+	} else {
+		if (address % 4 == 0) {
+			uint32_t pageIndex = address / PageSize;
+			uint32_t pageOffset = address % PageSize;
+			uint32_t cellIndex = pageOffset / 4;
+			Page& page = GetOrCreatePage(pageIndex);
+			page.cells[cellIndex] = value;
+			page.initialized.set(pageOffset);
+			page.initialized.set(pageOffset + 1);
+			page.initialized.set(pageOffset + 2);
+			page.initialized.set(pageOffset + 3);
+		} else {
+			for (uint32_t i = 0; i < 4; ++i) {
+				WriteByteInternal(address + i, static_cast<uint8_t>((value >> (i * 8)) & 0xFF));
+			}
+		}
 	}
 }
 
@@ -222,9 +247,9 @@ void Ram::ResetInitFlagInternal(uint32_t address)
 {
 	uint32_t pageIndex = address / PageSize;
 	uint32_t offset = address % PageSize;
-	const auto it = m_Pages.find(pageIndex);
-	if (it != m_Pages.end()) {
-		it->second->initialized.reset(offset);
+	const auto& pagePtr = m_Pages[pageIndex];
+	if (pagePtr) {
+		pagePtr->initialized.reset(offset);
 	}
 }
 }

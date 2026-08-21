@@ -11,6 +11,12 @@ add_subdirectory(Assembler)
 add_subdirectory(Emulator)
 add_subdirectory(Tests)
 
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported)
+if(ipo_supported)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
 if(MSVC)
     add_compile_options(/W4)
 else()

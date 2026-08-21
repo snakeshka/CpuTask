@@ -10,59 +10,69 @@
 
 
 namespace Emulator {
+struct ExecutionContext
+{
+	CpuState& State;
+	BusRouter& Bus;
+	class Tracer& Tracer;
+	const Cpu::Isa::Instruction& Instruction;
+	uint32_t Tick;
+};
+
 class Executor
 {
 public:
-	Executor();
+	using Handler = ExecutionStatus (*)(ExecutionContext&);
+
+	Executor() = default;
 
 	ExecutionStatus Execute(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick) const;
+	ExecutionStatus Execute(ExecutionContext& ctx) const;
 
 private:
-	using Handler = ExecutionStatus (*)(CpuState&, BusRouter&, Tracer&, const Cpu::Isa::Instruction&, uint32_t);
+	static consteval std::array<Handler, 256> CreateHandlersMap();
 
-	static constexpr std::array<Handler, 256> CreateHandlersMap();
+	static const std::array<Handler, 256> s_handlers;
 
-	std::array<Handler, 256> m_Handlers{};
-
-	static ExecutionStatus ExecuteIllegal(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteLi(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteLui(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteAdd(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteSub(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteAnd(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteOr(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteXor(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteSll(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteSrl(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteSra(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteMul(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteUdiv(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteSdiv(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteLdb(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteLdh(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteLdw(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteStb(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteSth(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteStw(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteSxt(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteBswap(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteScrw(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteScrr(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteAspi(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteAspr(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteRjmp(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteBrz(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteBrnz(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteAjmp(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteCall(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteRih(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteWait(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteEq(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteNe(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteLt(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteGe(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteSlt(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteSge(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
-	static ExecutionStatus ExecuteSimCtrl(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick);
+	static ExecutionStatus ExecuteIllegal(ExecutionContext&);
+	static ExecutionStatus ExecuteLi(ExecutionContext&);
+	static ExecutionStatus ExecuteLui(ExecutionContext&);
+	static ExecutionStatus ExecuteAdd(ExecutionContext&);
+	static ExecutionStatus ExecuteSub(ExecutionContext&);
+	static ExecutionStatus ExecuteAnd(ExecutionContext&);
+	static ExecutionStatus ExecuteOr(ExecutionContext&);
+	static ExecutionStatus ExecuteXor(ExecutionContext&);
+	static ExecutionStatus ExecuteSll(ExecutionContext&);
+	static ExecutionStatus ExecuteSrl(ExecutionContext&);
+	static ExecutionStatus ExecuteSra(ExecutionContext&);
+	static ExecutionStatus ExecuteMul(ExecutionContext&);
+	static ExecutionStatus ExecuteUdiv(ExecutionContext&);
+	static ExecutionStatus ExecuteSdiv(ExecutionContext&);
+	static ExecutionStatus ExecuteLdb(ExecutionContext&);
+	static ExecutionStatus ExecuteLdh(ExecutionContext&);
+	static ExecutionStatus ExecuteLdw(ExecutionContext&);
+	static ExecutionStatus ExecuteStb(ExecutionContext&);
+	static ExecutionStatus ExecuteSth(ExecutionContext&);
+	static ExecutionStatus ExecuteStw(ExecutionContext&);
+	static ExecutionStatus ExecuteSxt(ExecutionContext&);
+	static ExecutionStatus ExecuteBswap(ExecutionContext&);
+	static ExecutionStatus ExecuteScrw(ExecutionContext&);
+	static ExecutionStatus ExecuteScrr(ExecutionContext&);
+	static ExecutionStatus ExecuteAspi(ExecutionContext&);
+	static ExecutionStatus ExecuteAspr(ExecutionContext&);
+	static ExecutionStatus ExecuteRjmp(ExecutionContext&);
+	static ExecutionStatus ExecuteBrz(ExecutionContext&);
+	static ExecutionStatus ExecuteBrnz(ExecutionContext&);
+	static ExecutionStatus ExecuteAjmp(ExecutionContext&);
+	static ExecutionStatus ExecuteCall(ExecutionContext&);
+	static ExecutionStatus ExecuteRih(ExecutionContext&);
+	static ExecutionStatus ExecuteWait(ExecutionContext&);
+	static ExecutionStatus ExecuteEq(ExecutionContext&);
+	static ExecutionStatus ExecuteNe(ExecutionContext&);
+	static ExecutionStatus ExecuteLt(ExecutionContext&);
+	static ExecutionStatus ExecuteGe(ExecutionContext&);
+	static ExecutionStatus ExecuteSlt(ExecutionContext&);
+	static ExecutionStatus ExecuteSge(ExecutionContext&);
+	static ExecutionStatus ExecuteSimCtrl(ExecutionContext&);
 };
 }

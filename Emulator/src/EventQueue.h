@@ -18,18 +18,17 @@ class EventQueue
 public:
 	void Schedule(uint32_t targetTick, std::function<uint32_t(uint32_t currentTick)> handler)
 	{
-		m_Events.push_back(Event{targetTick, std::move(handler)});
-		std::sort(m_Events.begin(), m_Events.end(), [](const Event& a, const Event& b) {
-			return a.TargetTick < b.TargetTick;
+		auto it = std::lower_bound(m_Events.begin(), m_Events.end(), targetTick, [](const Event& e, uint32_t tick) {
+			return e.TargetTick > tick;
 		});
+		m_Events.insert(it, Event{targetTick, std::move(handler)});
 	}
 
 	void ProcessEvents(uint32_t currentTick)
 	{
-		while (!m_Events.empty() && m_Events.front().TargetTick <= currentTick) {
-			auto event = std::move(m_Events.front());
-			m_Events.erase(m_Events.begin());
-
+		while (!m_Events.empty() && m_Events.back().TargetTick <= currentTick) {
+			auto event = std::move(m_Events.back());
+			m_Events.pop_back();
 			uint32_t delta = event.Handler(currentTick);
 			if (delta > 0) {
 				Schedule(currentTick + delta, std::move(event.Handler));

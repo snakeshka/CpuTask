@@ -1,11 +1,12 @@
 #include "Tracer.h"
 #include "Cpu/Isa/InstructionSet.h"
+#include "Cpu/Common/Exeptions.h"
 #include <iostream>
 #include <iomanip>
 
 #if TRACING
 namespace Emulator {
-void Tracer::TraceInterrupt(uint32_t tick, uint32_t iip, uint32_t icr, uint32_t ihr)
+CPU_NOINLINE void Tracer::TraceInterrupt(uint32_t tick, uint32_t iip, uint32_t icr, uint32_t ihr)
 {
 	if (m_TraceIntEnabled) {
 		std::cout << std::dec << tick << " INT IIP=0x" << std::hex << iip
@@ -14,7 +15,7 @@ void Tracer::TraceInterrupt(uint32_t tick, uint32_t iip, uint32_t icr, uint32_t 
 	}
 }
 
-void Tracer::PrintTraceLine(const CpuState& state, const Cpu::Isa::Instruction& instruction, bool interrupted) const
+CPU_NOINLINE void Tracer::PrintTraceLine(const CpuState& state, const Cpu::Isa::Instruction& instruction, bool interrupted) const
 {
 	auto formatOpt = Cpu::Isa::findInstructionByOpcode(instruction.opcode);
 	if (!formatOpt.has_value())

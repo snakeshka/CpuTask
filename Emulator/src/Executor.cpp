@@ -5,11 +5,6 @@
 #include "Cpu/Isa/Opcode.h"
 
 namespace Emulator {
-Executor::Executor()
-	: m_Handlers(CreateHandlersMap())
-{
-}
-
 namespace {
 	constexpr uint8_t toIdx(Cpu::Isa::Opcode op)
 	{
@@ -19,19 +14,22 @@ namespace {
 
 ExecutionStatus Executor::Execute(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick) const
 {
-	const auto opcode = static_cast<uint8_t>(instruction.opcode);
-	CPU_ASSERT(opcode < m_Handlers.size(), "Opcode value exceeds handlers array boundary!");
+	ExecutionContext ctx{state, bus, tracer, instruction, tick};
+	return Execute(ctx);
+}
 
-	auto status = m_Handlers[opcode](state, bus, tracer, instruction, tick);
-
+ExecutionStatus Executor::Execute(ExecutionContext& ctx) const
+{
+	const auto opcode = static_cast<uint8_t>(ctx.Instruction.opcode);
+	CPU_ASSERT(opcode < s_handlers.size(), "Opcode value exceeds handlers array boundary!");
+	auto status = s_handlers[opcode](ctx);
 	if (status == ExecutionStatus::Success || status == ExecutionStatus::Wait) {
-		state.AdvanceInstructionPointer();
+		ctx.State.AdvanceInstructionPointer();
 	}
-
 	return status;
 }
 
-constexpr std::array<Executor::Handler, 256> Executor::CreateHandlersMap()
+consteval std::array<Executor::Handler, 256> Executor::CreateHandlersMap()
 {
 	std::array<Handler, 256> handlers{};
 
@@ -79,76 +77,77 @@ constexpr std::array<Executor::Handler, 256> Executor::CreateHandlersMap()
 	return handlers;
 }
 
-ExecutionStatus Executor::ExecuteIllegal(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+const std::array<Executor::Handler, 256> Executor::s_handlers = Executor::CreateHandlersMap();
+
+ExecutionStatus Executor::ExecuteIllegal(ExecutionContext& ctx)
 {
-	(void)state;
-	(void)instruction;
+	(void)ctx;
 	return ExecutionStatus::IllegalInstruction;
 }
 
-ExecutionStatus Executor::ExecuteLi(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteLi(ExecutionContext& ctx)
 {
-	state.SetRegister(instruction.a, instruction.immediate16());
+	ctx.State.SetRegister(ctx.Instruction.a, ctx.Instruction.immediate16());
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteLui(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteLui(ExecutionContext& ctx)
 {
-	state.SetRegister(instruction.a, (state.GetRegister(instruction.a) & 0x0000FFFF) | (static_cast<uint32_t>(instruction.immediate16()) << 16));
+	ctx.State.SetRegister(ctx.Instruction.a, (ctx.State.GetRegister(ctx.Instruction.a) & 0x0000FFFF) | (static_cast<uint32_t>(ctx.Instruction.immediate16()) << 16));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteAdd(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteAdd(ExecutionContext& ctx)
 {
-	state.SetRegister(instruction.a, state.GetRegister(instruction.b) + state.GetRegister(instruction.c));
+	ctx.State.SetRegister(ctx.Instruction.a, ctx.State.GetRegister(ctx.Instruction.b) + ctx.State.GetRegister(ctx.Instruction.c));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSub(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSub(ExecutionContext& ctx)
 {
-	state.SetRegister(instruction.a, state.GetRegister(instruction.b) - state.GetRegister(instruction.c));
+	ctx.State.SetRegister(ctx.Instruction.a, ctx.State.GetRegister(ctx.Instruction.b) - ctx.State.GetRegister(ctx.Instruction.c));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteAnd(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteAnd(ExecutionContext& ctx)
 {
-	state.SetRegister(instruction.a, state.GetRegister(instruction.b) & state.GetRegister(instruction.c));
+	ctx.State.SetRegister(ctx.Instruction.a, ctx.State.GetRegister(ctx.Instruction.b) & ctx.State.GetRegister(ctx.Instruction.c));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteOr(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteOr(ExecutionContext& ctx)
 {
-	state.SetRegister(instruction.a, state.GetRegister(instruction.b) | state.GetRegister(instruction.c));
+	ctx.State.SetRegister(ctx.Instruction.a, ctx.State.GetRegister(ctx.Instruction.b) | ctx.State.GetRegister(ctx.Instruction.c));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteXor(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteXor(ExecutionContext& ctx)
 {
-	state.SetRegister(instruction.a, state.GetRegister(instruction.b) ^ state.GetRegister(instruction.c));
+	ctx.State.SetRegister(ctx.Instruction.a, ctx.State.GetRegister(ctx.Instruction.b) ^ ctx.State.GetRegister(ctx.Instruction.c));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSll(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSll(ExecutionContext& ctx)
 {
-	state.SetRegister(instruction.a, state.GetRegister(instruction.b) << (state.GetRegister(instruction.c) & 0x1F));
+	ctx.State.SetRegister(ctx.Instruction.a, ctx.State.GetRegister(ctx.Instruction.b) << (ctx.State.GetRegister(ctx.Instruction.c) & 0x1F));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSrl(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSrl(ExecutionContext& ctx)
 {
-	state.SetRegister(instruction.a, state.GetRegister(instruction.b) >> (state.GetRegister(instruction.c) & 0x1F));
+	ctx.State.SetRegister(ctx.Instruction.a, ctx.State.GetRegister(ctx.Instruction.b) >> (ctx.State.GetRegister(ctx.Instruction.c) & 0x1F));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSra(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSra(ExecutionContext& ctx)
 {
-	//state.SetRegister(instruction.a, static_cast<int32_t>(state.GetRegister(instruction.b)) >> (state.GetRegister(instruction.c) & 0x1F));
+	//ctx.State.SetRegister(ctx.Instruction.a, static_cast<int32_t>(ctx.State.GetRegister(ctx.Instruction.b)) >> (ctx.State.GetRegister(ctx.Instruction.c) & 0x1F));
 
-	uint32_t value = state.GetRegister(instruction.b);
-	uint32_t shift = state.GetRegister(instruction.c) & 0x1F;
+	uint32_t value = ctx.State.GetRegister(ctx.Instruction.b);
+	uint32_t shift = ctx.State.GetRegister(ctx.Instruction.c) & 0x1F;
 
-	if (shift == 0) {
-		state.SetRegister(instruction.a, value);
+	if (shift == 0) [[unlikely]] {
+		ctx.State.SetRegister(ctx.Instruction.a, value);
 		return ExecutionStatus::Success;
 	}
 
@@ -156,101 +155,101 @@ ExecutionStatus Executor::ExecuteSra(CpuState& state, BusRouter& bus, Tracer& tr
 	uint32_t fillMask = (0 - signBit) << (32 - shift);
 	uint32_t result = (value >> shift) | fillMask;
 
-	state.SetRegister(instruction.a, result);
+	ctx.State.SetRegister(ctx.Instruction.a, result);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteMul(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteMul(ExecutionContext& ctx)
 {
-	state.SetRegister(instruction.a, state.GetRegister(instruction.b) * state.GetRegister(instruction.c));
+	ctx.State.SetRegister(ctx.Instruction.a, ctx.State.GetRegister(ctx.Instruction.b) * ctx.State.GetRegister(ctx.Instruction.c));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteUdiv(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteUdiv(ExecutionContext& ctx)
 {
-	uint32_t divisor = state.GetRegister(instruction.c);
-	if (divisor == 0) {
+	uint32_t divisor = ctx.State.GetRegister(ctx.Instruction.c);
+	if (divisor == 0) [[unlikely]] {
 		return ExecutionStatus::DivisionByZero;
 	}
-	state.SetRegister(instruction.a, state.GetRegister(instruction.b) / divisor);
+	ctx.State.SetRegister(ctx.Instruction.a, ctx.State.GetRegister(ctx.Instruction.b) / divisor);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSdiv(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSdiv(ExecutionContext& ctx)
 {
-	int32_t valB = static_cast<int32_t>(state.GetRegister(instruction.b));
-	int32_t valC = static_cast<int32_t>(state.GetRegister(instruction.c));
-	if (valC == 0) {
+	int32_t valB = static_cast<int32_t>(ctx.State.GetRegister(ctx.Instruction.b));
+	int32_t valC = static_cast<int32_t>(ctx.State.GetRegister(ctx.Instruction.c));
+	if (valC == 0) [[unlikely]]	{
 		return ExecutionStatus::DivisionByZero;
 	}
-	state.SetRegister(instruction.a, static_cast<uint32_t>(valB / valC));
+	ctx.State.SetRegister(ctx.Instruction.a, static_cast<uint32_t>(valB / valC));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteLdb(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteLdb(ExecutionContext& ctx)
 {
-	uint32_t addr = state.GetRegister(instruction.b) + instruction.c;
-	if (!bus.IsValidRange(addr, 1)) {
+	uint32_t addr = ctx.State.GetRegister(ctx.Instruction.b) + ctx.Instruction.c;
+	if (!ctx.Bus.IsValidRange(addr, 1)) [[unlikely]] {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
-	state.SetRegister(instruction.a, bus.ReadByte(addr, tick));
+	ctx.State.SetRegister(ctx.Instruction.a, ctx.Bus.ReadByte(addr, ctx.Tick));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteLdh(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteLdh(ExecutionContext& ctx)
 {
-	uint32_t addr = state.GetRegister(instruction.b) + instruction.c;
-	if (!bus.IsValidRange(addr, 2)) {
+	uint32_t addr = ctx.State.GetRegister(ctx.Instruction.b) + ctx.Instruction.c;
+	if (!ctx.Bus.IsValidRange(addr, 2)) [[unlikely]] {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
-	state.SetRegister(instruction.a, bus.ReadHalfword(addr, tick));
+	ctx.State.SetRegister(ctx.Instruction.a, ctx.Bus.ReadHalfword(addr, ctx.Tick));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteLdw(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteLdw(ExecutionContext& ctx)
 {
-	uint32_t addr = state.GetRegister(instruction.b) + instruction.c;
-	if (!bus.IsValidRange(addr, 4)) {
+	uint32_t addr = ctx.State.GetRegister(ctx.Instruction.b) + ctx.Instruction.c;
+	if (!ctx.Bus.IsValidRange(addr, 4)) [[unlikely]] {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
-	state.SetRegister(instruction.a, bus.ReadWord(addr, tick));
+	ctx.State.SetRegister(ctx.Instruction.a, ctx.Bus.ReadWord(addr, ctx.Tick));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteStb(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteStb(ExecutionContext& ctx)
 {
-	uint32_t addr = state.GetRegister(instruction.b) + instruction.c;
-	if (!bus.IsValidRange(addr, 1)) {
+	uint32_t addr = ctx.State.GetRegister(ctx.Instruction.b) + ctx.Instruction.c;
+	if (!ctx.Bus.IsValidRange(addr, 1)) [[unlikely]] {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
-	bus.WriteByte(addr, static_cast<uint8_t>(state.GetRegister(instruction.a) & 0xFF), tick);
+	ctx.Bus.WriteByte(addr, static_cast<uint8_t>(ctx.State.GetRegister(ctx.Instruction.a) & 0xFF), ctx.Tick);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSth(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSth(ExecutionContext& ctx)
 {
-	uint32_t addr = state.GetRegister(instruction.b) + instruction.c;
-	if (!bus.IsValidRange(addr, 2)) {
+	uint32_t addr = ctx.State.GetRegister(ctx.Instruction.b) + ctx.Instruction.c;
+	if (!ctx.Bus.IsValidRange(addr, 2)) [[unlikely]] {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
-	bus.WriteHalfword(addr, static_cast<uint16_t>(state.GetRegister(instruction.a) & 0xFFFF), tick);
+	ctx.Bus.WriteHalfword(addr, static_cast<uint16_t>(ctx.State.GetRegister(ctx.Instruction.a) & 0xFFFF), ctx.Tick);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteStw(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteStw(ExecutionContext& ctx)
 {
-	uint32_t addr = state.GetRegister(instruction.b) + instruction.c;
-	if (!bus.IsValidRange(addr, 4)) {
+	uint32_t addr = ctx.State.GetRegister(ctx.Instruction.b) + ctx.Instruction.c;
+	if (!ctx.Bus.IsValidRange(addr, 4)) [[unlikely]] {
 		return ExecutionStatus::MemoryOutOfBounds;
 	}
-	bus.WriteWord(addr, state.GetRegister(instruction.a), tick);
+	ctx.Bus.WriteWord(addr, ctx.State.GetRegister(ctx.Instruction.a), ctx.Tick);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSxt(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSxt(ExecutionContext& ctx)
 {
-	uint32_t val = state.GetRegister(instruction.b);
-	uint32_t imm = instruction.c;
+	uint32_t val = ctx.State.GetRegister(ctx.Instruction.b);
+	uint32_t imm = ctx.Instruction.c;
 	uint32_t res = val;
 	if (imm == 0) {
 		uint32_t signBit = (val >> 7) & 1;
@@ -262,14 +261,14 @@ ExecutionStatus Executor::ExecuteSxt(CpuState& state, BusRouter& bus, Tracer& tr
 		res = (val & 0xFFFF) | mask;
 	}
 
-	state.SetRegister(instruction.a, res);
+	ctx.State.SetRegister(ctx.Instruction.a, res);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteBswap(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteBswap(ExecutionContext& ctx)
 {
-	uint32_t val = state.GetRegister(instruction.b);
-	uint32_t imm = instruction.c;
+	uint32_t val = ctx.State.GetRegister(ctx.Instruction.b);
+	uint32_t imm = ctx.Instruction.c;
 	uint32_t res = val;
 	if (imm == 1) {
 		uint32_t low = val & 0xFF;
@@ -282,186 +281,178 @@ ExecutionStatus Executor::ExecuteBswap(CpuState& state, BusRouter& bus, Tracer& 
 		uint32_t b3 = (val >> 24) & 0xFF;
 		res = (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
 	}
-	state.SetRegister(instruction.a, res);
+	ctx.State.SetRegister(ctx.Instruction.a, res);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteScrw(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteScrw(ExecutionContext& ctx)
 {
-	if (!state.IsValidScr(instruction.a)) {
+	if (!ctx.State.IsValidScr(ctx.Instruction.a)) [[unlikely]] {
 		return ExecutionStatus::InvalidScrIndex;
 	}
-	state.SetScr(instruction.a, state.GetRegister(instruction.b));
+	ctx.State.SetScr(ctx.Instruction.a, ctx.State.GetRegister(ctx.Instruction.b));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteScrr(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteScrr(ExecutionContext& ctx)
 {
-	if (!state.IsValidScr(instruction.b)) {
+	if (!ctx.State.IsValidScr(ctx.Instruction.b)) [[unlikely]] {
 		return ExecutionStatus::InvalidScrIndex;
 	}
-	state.SetRegister(instruction.a, state.GetScr(instruction.b));
+	ctx.State.SetRegister(ctx.Instruction.a, ctx.State.GetScr(ctx.Instruction.b));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteAspi(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteAspi(ExecutionContext& ctx)
 {
-	int16_t sI = static_cast<int16_t>(instruction.immediate16());
-	uint32_t spSize = state.GetScr(SystemRegister::SP_SIZE);
-	if (sI < 0 && spSize < static_cast<uint32_t>(-sI)) {
+	int16_t sI = static_cast<int16_t>(ctx.Instruction.immediate16());
+	uint32_t spSize = ctx.State.GetScr(SystemRegister::SP_SIZE);
+	if (sI < 0 && spSize < static_cast<uint32_t>(-sI)) [[unlikely]] {
 		return ExecutionStatus::StackOverflow;
 	}
-	uint32_t spTop = state.GetScr(SystemRegister::SP_TOP);
+	uint32_t spTop = ctx.State.GetScr(SystemRegister::SP_TOP);
 	if (sI > 0) {
-		bus.FreeMemoryRegion(spTop, static_cast<uint32_t>(sI));
+		ctx.Bus.FreeMemoryRegion(spTop, static_cast<uint32_t>(sI));
 	}
-	state.SetScr(SystemRegister::SP_TOP, spTop + sI);
-	state.SetScr(SystemRegister::SP_SIZE, spSize + sI);
-	state.SetRegister(instruction.a, spTop + sI);
+	ctx.State.SetScr(SystemRegister::SP_TOP, spTop + sI);
+	ctx.State.SetScr(SystemRegister::SP_SIZE, spSize + sI);
+	ctx.State.SetRegister(ctx.Instruction.a, spTop + sI);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteAspr(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteAspr(ExecutionContext& ctx)
 {
-	int32_t sI = static_cast<int32_t>(state.GetRegister(instruction.b));
-	uint32_t spSize = state.GetScr(SystemRegister::SP_SIZE);
-	if (sI < 0 && spSize < static_cast<uint32_t>(-sI)) {
+	int32_t sI = static_cast<int32_t>(ctx.State.GetRegister(ctx.Instruction.b));
+	uint32_t spSize = ctx.State.GetScr(SystemRegister::SP_SIZE);
+	if (sI < 0 && spSize < static_cast<uint32_t>(-sI)) [[unlikely]] {
 		return ExecutionStatus::StackOverflow;
 	}
-	uint32_t spTop = state.GetScr(SystemRegister::SP_TOP);
+	uint32_t spTop = ctx.State.GetScr(SystemRegister::SP_TOP);
 	if (sI > 0) {
-		bus.FreeMemoryRegion(spTop, static_cast<uint32_t>(sI));
+		ctx.Bus.FreeMemoryRegion(spTop, static_cast<uint32_t>(sI));
 	}
-	state.SetScr(SystemRegister::SP_TOP, spTop + sI);
-	state.SetScr(SystemRegister::SP_SIZE, spSize + sI);
-	state.SetRegister(instruction.a, spTop + sI);
+	ctx.State.SetScr(SystemRegister::SP_TOP, spTop + sI);
+	ctx.State.SetScr(SystemRegister::SP_SIZE, spSize + sI);
+	ctx.State.SetRegister(ctx.Instruction.a, spTop + sI);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteRjmp(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteRjmp(ExecutionContext& ctx)
 {
-	int16_t offset = static_cast<int16_t>(instruction.immediate16());
+	int16_t offset = static_cast<int16_t>(ctx.Instruction.immediate16());
 	// Поскольку Execute() увеличивает IP на CpuState::InstructionSize после успешного выполнения,
 	// вычитаем CpuState::InstructionSize из целевого IP, чтобы компенсировать этот шаг.
-	state.SetInstructionPointer(state.InstructionPointer() + offset * CpuState::InstructionSize - CpuState::InstructionSize);
+	ctx.State.SetInstructionPointer(ctx.State.InstructionPointer() + offset * CpuState::InstructionSize - CpuState::InstructionSize);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteBrz(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteBrz(ExecutionContext& ctx)
 {
-	if (state.GetRegister(instruction.a) == 0) {
-		int16_t offset = static_cast<int16_t>(instruction.immediate16());
-		state.SetInstructionPointer(state.InstructionPointer() + offset * CpuState::InstructionSize - CpuState::InstructionSize);
+	if (ctx.State.GetRegister(ctx.Instruction.a) == 0) {
+		int16_t offset = static_cast<int16_t>(ctx.Instruction.immediate16());
+		ctx.State.SetInstructionPointer(ctx.State.InstructionPointer() + offset * CpuState::InstructionSize - CpuState::InstructionSize);
 	}
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteBrnz(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteBrnz(ExecutionContext& ctx)
 {
-	if (state.GetRegister(instruction.a) != 0) {
-		int16_t offset = static_cast<int16_t>(instruction.immediate16());
-		state.SetInstructionPointer(state.InstructionPointer() + offset * CpuState::InstructionSize - CpuState::InstructionSize);
+	if (ctx.State.GetRegister(ctx.Instruction.a) != 0) {
+		int16_t offset = static_cast<int16_t>(ctx.Instruction.immediate16());
+		ctx.State.SetInstructionPointer(ctx.State.InstructionPointer() + offset * CpuState::InstructionSize - CpuState::InstructionSize);
 	}
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteAjmp(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteAjmp(ExecutionContext& ctx)
 {
-	state.SetInstructionPointer(state.GetRegister(instruction.a) - CpuState::InstructionSize);
+	ctx.State.SetInstructionPointer(ctx.State.GetRegister(ctx.Instruction.a) - CpuState::InstructionSize);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteCall(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteCall(ExecutionContext& ctx)
 {
 	// Сохраняем адрес следующей инструкции в R1
-	state.SetRegister(1, state.InstructionPointer() + 4);
-	state.SetInstructionPointer(state.GetRegister(instruction.a) - CpuState::InstructionSize);
+	ctx.State.SetRegister(1, ctx.State.InstructionPointer() + 4);
+	ctx.State.SetInstructionPointer(ctx.State.GetRegister(ctx.Instruction.a) - CpuState::InstructionSize);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteRih(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteRih(ExecutionContext& ctx)
 {
 	// IP = IIP (с учетом последующего Advance (+4) в Executor::Execute)
-	state.SetInstructionPointer(state.GetScr(SystemRegister::IIP) - CpuState::InstructionSize);
+	ctx.State.SetInstructionPointer(ctx.State.GetScr(SystemRegister::IIP) - CpuState::InstructionSize);
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteWait(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteWait(ExecutionContext& ctx)
 {
-	(void)state;
-	(void)bus;
-	(void)tracer;
-	(void)instruction;
-	(void)tick;
+	(void)ctx;
 	return ExecutionStatus::Wait;
 }
 
-ExecutionStatus Executor::ExecuteEq(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteEq(ExecutionContext& ctx)
 {
-	state.SetRegister(instruction.a, state.GetRegister(instruction.b) == state.GetRegister(instruction.c) ? 1 : 0);
+	ctx.State.SetRegister(ctx.Instruction.a, static_cast<uint32_t>(ctx.State.GetRegister(ctx.Instruction.b) == ctx.State.GetRegister(ctx.Instruction.c)));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteNe(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteNe(ExecutionContext& ctx)
 {
-	state.SetRegister(instruction.a, state.GetRegister(instruction.b) != state.GetRegister(instruction.c) ? 1 : 0);
+	ctx.State.SetRegister(ctx.Instruction.a, static_cast<uint32_t>(ctx.State.GetRegister(ctx.Instruction.b) != ctx.State.GetRegister(ctx.Instruction.c)));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteLt(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteLt(ExecutionContext& ctx)
 {
-	state.SetRegister(instruction.a, state.GetRegister(instruction.b) < state.GetRegister(instruction.c) ? 1 : 0);
+	ctx.State.SetRegister(ctx.Instruction.a, static_cast<uint32_t>(ctx.State.GetRegister(ctx.Instruction.b) < ctx.State.GetRegister(ctx.Instruction.c)));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteGe(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteGe(ExecutionContext& ctx)
 {
-	state.SetRegister(instruction.a, state.GetRegister(instruction.b) >= state.GetRegister(instruction.c) ? 1 : 0);
+	ctx.State.SetRegister(ctx.Instruction.a, static_cast<uint32_t>(ctx.State.GetRegister(ctx.Instruction.b) >= ctx.State.GetRegister(ctx.Instruction.c)));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSlt(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSlt(ExecutionContext& ctx)
 {
-	int32_t valB = static_cast<int32_t>(state.GetRegister(instruction.b));
-	int32_t valC = static_cast<int32_t>(state.GetRegister(instruction.c));
-	state.SetRegister(instruction.a, valB < valC ? 1 : 0);
+	ctx.State.SetRegister(ctx.Instruction.a, static_cast<uint32_t>(ctx.State.GetRegister(ctx.Instruction.b) < ctx.State.GetRegister(ctx.Instruction.c)));
 	return ExecutionStatus::Success;
 }
 
-ExecutionStatus Executor::ExecuteSge(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSge(ExecutionContext& ctx)
 {
-	int32_t valB = static_cast<int32_t>(state.GetRegister(instruction.b));
-	int32_t valC = static_cast<int32_t>(state.GetRegister(instruction.c));
-	state.SetRegister(instruction.a, valB >= valC ? 1 : 0);
+	ctx.State.SetRegister(ctx.Instruction.a, static_cast<uint32_t>(ctx.State.GetRegister(ctx.Instruction.b) >= ctx.State.GetRegister(ctx.Instruction.c)));
 	return ExecutionStatus::Success;
 }
-ExecutionStatus Executor::ExecuteSimCtrl(CpuState& state, BusRouter& bus, Tracer& tracer, const Cpu::Isa::Instruction& instruction, uint32_t tick)
+ExecutionStatus Executor::ExecuteSimCtrl(ExecutionContext& ctx)
 {
     // Команды вида 0xFF 0xFF <sub_opcode> <c>
-    if (instruction.a == 0xFF) {
-        const uint8_t subOpcode = instruction.b;
-        const uint8_t regC = instruction.c;
+    if (ctx.Instruction.a == 0xFF) {
+        const uint8_t subOpcode = ctx.Instruction.b;
+        const uint8_t regC = ctx.Instruction.c;
         if (subOpcode == 0x01) { 
             // _SIM_GET_TICK Rc
-            state.SetRegister(regC, tick);
+            ctx.State.SetRegister(regC, ctx.Tick);
             return ExecutionStatus::Success;
         } 
         
         if (subOpcode == 0x02) { 
             // _SIM_TRACE_DISASM Rc
-            const uint32_t cond = state.GetRegister(regC);
-            tracer.SetTraceDisasmEnabled(cond != 0);
+            const uint32_t cond = ctx.State.GetRegister(regC);
+            ctx.Tracer.SetTraceDisasmEnabled(cond != 0);
             return ExecutionStatus::Success;
         }
         if (subOpcode == 0x00) {
             // _SIM_HALTR Rc
-            const uint32_t exitCode = state.GetRegister(regC);
+            const uint32_t exitCode = ctx.State.GetRegister(regC);
             return (exitCode == 0) ? ExecutionStatus::HaltedPassed : ExecutionStatus::HaltedFailed;
         }
     } 
-    else if (instruction.a == 0x00) {
+    else if (ctx.Instruction.a == 0x00) {
         // _SIM_HALTI I
-        const uint16_t imm = instruction.immediate16();
+        const uint16_t imm = ctx.Instruction.immediate16();
         return (imm == 0) ? ExecutionStatus::HaltedPassed : ExecutionStatus::HaltedFailed;
     }
     return ExecutionStatus::IllegalInstruction;

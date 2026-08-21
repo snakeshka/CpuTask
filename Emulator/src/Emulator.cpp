@@ -18,11 +18,11 @@ namespace Emulator {
 EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 							 const EmulatorConfig& config) const
 {
-	if (bytecode.size() % 4 != 0) {
+	if (bytecode.size() % 4 != 0) [[unlikely]] {
 		return EmulatorResult{CpuState{}, false, "invalid bytecode size"};
 	}
 
-	if (bytecode.size() > config.Ram.Size) {
+	if (bytecode.size() > config.Ram.Size) [[unlikely]] {
 		return EmulatorResult{CpuState{}, false, "program size exceeds RAM size"};
 	}
 
@@ -81,16 +81,10 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 		uint32_t currentIp = state.InstructionPointer();
 
 		const uint32_t rawWord = bus.ReadWord(currentIp, tick);
-		const Cpu::Isa::InstructionBytes bytes = {
-			static_cast<Cpu::Byte>(rawWord & 0xFF),
-			static_cast<Cpu::Byte>((rawWord >> 8) & 0xFF),
-			static_cast<Cpu::Byte>((rawWord >> 16) & 0xFF),
-			static_cast<Cpu::Byte>((rawWord >> 24) & 0xFF),
-		};
+		const auto opcode = static_cast<Cpu::Isa::Opcode>(rawWord & 0xFF);
 
-		auto instrOpt = Cpu::Isa::decodeInstruction(bytes);
 		// Ошибка декодирования (неизвестный опкод)
-		if (!instrOpt.has_value()) {
+		if (!Cpu::Isa::OpcodeTable[static_cast<size_t>(opcode)].has_value()) [[unlikely]] {
 			uint32_t cause = 0;             // Illegal Opcode
 			state.SetScr(SystemRegister::IIP, currentIp);
 			state.SetScr(SystemRegister::ICR, cause);
@@ -103,7 +97,13 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 			tick++;
 			continue;
 		}
-		const auto& instruction = *instrOpt;
+
+		Cpu::Isa::Instruction instruction{
+			.opcode = opcode,
+			.a = static_cast<uint8_t>((rawWord >> 8) & 0xFF),
+			.b = static_cast<uint8_t>((rawWord >> 16) & 0xFF),
+			.c = static_cast<uint8_t>((rawWord >> 24) & 0xFF)};
+
 		tracer.SaveStateBefore(state, instruction);
 		auto status = executor.Execute(state, bus, tracer, instruction, tick);
 		if (status == ExecutionStatus::HaltedPassed) {
@@ -121,7 +121,7 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 			continue;
 		}
 		// Ошибка выполнения инструкции
-		if (status != ExecutionStatus::Success) {
+		if (status != ExecutionStatus::Success) [[unlikely]] {
 			uint32_t cause = 0;
 			if (status == ExecutionStatus::IllegalInstruction) {
 				cause = 0; // Illegal Opcode

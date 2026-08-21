@@ -49,7 +49,7 @@ private:
 	bool m_clearStack = false;
 	std::vector<AddrInterval> m_TraceIntervals;
 
-	std::unordered_map<uint32_t, std::unique_ptr<Page>> m_Pages;
+	std::vector<std::unique_ptr<Page>> m_Pages;
 
 	Page& GetOrCreatePage(uint32_t pageIndex);
 	void CheckBounds(uint32_t address) const;
@@ -60,5 +60,6 @@ private:
 	void WriteByteInternal(uint32_t address, uint8_t value);
 
 	void LogTrace(uint32_t cellAddr, uint32_t oldVal, uint32_t newVal, uint32_t tick) const;
+	void LogUninitializedRead(uint32_t address, uint32_t tick) const;
 };
 }

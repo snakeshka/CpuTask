@@ -32,9 +32,9 @@ public:
 	inline void SaveStateBefore(const CpuState& state, const Cpu::Isa::Instruction& instruction)
 	{
 #if TRACING
-		if (!m_Enabled)
+		if (!m_Enabled) [[likely]]
 			return;
-		if (!IsTickAllowed(m_Tick))
+		if (!IsTickAllowed(m_Tick)) [[likely]]
 			return;
 
 		m_Addr = state.InstructionPointer();
@@ -92,7 +92,7 @@ private:
 
 	inline bool IsTickAllowed(uint32_t tick) const
 	{
-		if (m_Intervals.empty())
+		if (m_Intervals.empty()) [[unlikely]]
 			return true;
 		auto it = std::lower_bound(m_Intervals.begin(),
 		                           m_Intervals.end(),
