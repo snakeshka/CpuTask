@@ -17,10 +17,6 @@ public:
 	{
 	}
 
-	void SetInterruptCallback(InterruptCallback callback) {
-		m_InterruptCallback = std::move(callback);
-	}
-
 	uint32_t GetBaseAddress() const override { return BaseAddr; }
 	uint32_t GetSize() const override { return DeviceSize; }
 
@@ -48,6 +44,5 @@ private:
 	BusRouter& m_BusRouter;
 	uint32_t m_Cntd = 0;
 	uint8_t m_Ctrl = 0;
-	InterruptCallback m_InterruptCallback;
 };
 }

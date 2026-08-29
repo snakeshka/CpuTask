@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "Devices/OutputDevice.h"
+#include "EventQueue.h"
 #include "Devices/PicDevice.h"
 #include "BusRouter.h"
 #include "Ram.h"
@@ -12,7 +13,8 @@ TEST(OutputDeviceTest, AsyncPioModeOutputsSingleChar)
 {
 	Ram ram(65536);
 	BusRouter bus(ram);
-	OutputDevice out(bus);
+	EventQueue queue;
+	OutputDevice out(bus, queue);
 	std::stringstream buffer;
 	std::streambuf* oldCout = std::cout.rdbuf(buffer.rdbuf());
 	out.WriteByte(6, 0);   // CTRL = 0 (PIO режим)
@@ -31,7 +33,8 @@ TEST(OutputDeviceTest, AsyncDmaModeOutputsBufferFromRamStepByStep)
 {
 	Ram ram(65536);
 	BusRouter bus(ram);
-	OutputDevice out(bus);
+	EventQueue queue;
+	OutputDevice out(bus, queue);
 	std::string text = "Hi";
 	for (size_t i = 0; i < text.size(); ++i) {
 		ram.WriteByte(0x2000 + static_cast<uint32_t>(i), text[i], 1);
@@ -58,7 +61,8 @@ TEST(OutputDeviceTest, GeneratesInterruptOnDmaCompletionWhenEnabled)
 	Ram ram(65536);
 	BusRouter bus(ram);
 	PicDevice pic;
-	OutputDevice out(bus);
+	EventQueue queue;
+	OutputDevice out(bus, queue);
 	bus.RegisterDevice(&pic);
 	bus.RegisterDevice(&out);
 	ram.WriteByte(0x3000, 'X', 1);

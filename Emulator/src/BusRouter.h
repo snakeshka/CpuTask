@@ -2,7 +2,7 @@
 
 #include "IDevice.h"
 #include "Ram.h"
-#include <vector>
+#include <array>
 #include <stdexcept>
 
 namespace Emulator {
@@ -11,15 +11,13 @@ public:
 	BusRouter(Ram& ram)
 		: m_Ram(ram) {}
 
-	void RegisterDevice(IDevice* device) {
-		m_Devices.push_back(device);
-	}
-
 	Ram& GetRam() { return m_Ram; }
 
 	bool IsValidRange(uint64_t address, uint32_t size) const {
 		return CheckValidAccess(static_cast<uint32_t>(address), size);
 	}
+
+	void RegisterDevice(IDevice* device);
 
 	uint8_t ReadByte(uint32_t address, uint32_t tick);
 	uint16_t ReadHalfword(uint32_t address, uint32_t tick);
@@ -37,7 +35,7 @@ public:
 
 private:
 	Ram& m_Ram;
-	std::vector<IDevice*> m_Devices;
+	std::array<IDevice*, 3> m_Devices{};
 
 	IDevice* FindDevice(uint32_t address) const;
 	bool CheckValidAccess(uint32_t address, uint32_t size) const;

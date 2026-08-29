@@ -1,37 +1,47 @@
 #pragma once
 
 #include <cstdint>
-#include <functional>
 #include <vector>
 #include <algorithm>
 
 namespace Emulator {
 
-struct Event
-{
+class Event {
+public:
+	virtual ~Event() = default;
+	virtual uint32_t OnEvent(uint32_t currentTick) = 0;
+};
+
+struct ScheduledEvent {
 	uint32_t TargetTick;
-	std::function<uint32_t(uint32_t currentTick)> Handler;
+	Event* TargetEvent;
 };
 
 class EventQueue
 {
 public:
-	void Schedule(uint32_t targetTick, std::function<uint32_t(uint32_t currentTick)> handler)
+	void ScheduleDelta(uint32_t delayTicks, Event* event) 
 	{
-		auto it = std::lower_bound(m_Events.begin(), m_Events.end(), targetTick, [](const Event& e, uint32_t tick) {
+		Schedule(m_CurrentTick + delayTicks, event);
+	}
+
+	void Schedule(uint32_t targetTick, Event* event) 
+	{
+		auto it = std::lower_bound(m_Events.begin(), m_Events.end(), targetTick, [](const ScheduledEvent& e, uint32_t tick) {
 			return e.TargetTick > tick;
 		});
-		m_Events.insert(it, Event{targetTick, std::move(handler)});
+		m_Events.insert(it, ScheduledEvent{targetTick, event});
 	}
 
 	void ProcessEvents(uint32_t currentTick)
 	{
+		m_CurrentTick = currentTick;
 		while (!m_Events.empty() && m_Events.back().TargetTick <= currentTick) {
-			auto event = std::move(m_Events.back());
+			auto scheduled = m_Events.back();
 			m_Events.pop_back();
-			uint32_t delta = event.Handler(currentTick);
+			uint32_t delta = scheduled.TargetEvent->OnEvent(currentTick);
 			if (delta > 0) {
-				Schedule(currentTick + delta, std::move(event.Handler));
+				Schedule(currentTick + delta, scheduled.TargetEvent);
 			}
 		}
 	}
@@ -42,7 +52,8 @@ public:
 	}
 
 private:
-	std::vector<Event> m_Events;
+	std::vector<ScheduledEvent> m_Events;
+	uint32_t m_CurrentTick = 0;
 };
 
 }

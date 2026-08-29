@@ -32,13 +32,14 @@ void OutputDevice::WriteWord(uint32_t offset, uint32_t value)
 			m_PioChar = static_cast<uint8_t>(value & 0xFF);
 			m_Ctrl |= 2; // BUSY = 1
 		}
+		m_EventQueue.ScheduleDelta(8, this);
 	}
 }
 
 uint32_t OutputDevice::OnEvent(uint32_t currentTick)
 {
 	ProcessDeviceTick(currentTick);
-	return 8;
+	return ((m_Ctrl & 2) != 0) ? 8 : 0;
 }
 
 void OutputDevice::ProcessDeviceTick(uint32_t currentTick)

@@ -1,8 +1,24 @@
-﻿cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.15)
 project(CPU_TASK CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT ipo_error LANGUAGES CXX)
+if(ipo_supported)
+    message(STATUS "LTO / IPO включен")
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        # Переопределяем флаг IPO для GCC на автоматический выбор количества потоков
+        set(CMAKE_CXX_COMPILE_OPTIONS_IPO "-flto=auto")
+        set(CMAKE_CXX_LINK_OPTIONS_IPO "-flto=auto")
+    endif()
+else()
+    message(WARNING "LTO / IPO не поддерживается: ${ipo_error}")
+endif()
 
 enable_testing()
 
@@ -10,12 +26,6 @@ add_subdirectory(Core)
 add_subdirectory(Assembler)
 add_subdirectory(Emulator)
 add_subdirectory(Tests)
-
-include(CheckIPOSupported)
-check_ipo_supported(RESULT ipo_supported)
-if(ipo_supported)
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()
 
 if(MSVC)
     add_compile_options(/W4)

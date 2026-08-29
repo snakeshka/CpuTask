@@ -2,6 +2,17 @@
 #include "Cpu/Common/Exeptions.h"
 
 namespace Emulator {
+void BusRouter::RegisterDevice(IDevice* device) {
+	if (!device) return;
+		uint32_t base = device->GetBaseAddress();
+		if (base >= 0xE000 && base <= 0xE020) {
+			uint32_t slot = (base - 0xE000) >> 4; // 0xE000 -> 0, 0xE010 -> 1, 0xE020 -> 2
+			if (slot < m_Devices.size()) {
+				m_Devices[slot] = device;
+			}
+		}
+}
+
 IDevice* BusRouter::FindDevice(uint32_t address) const {
 	if (address < 0xE000 || address >= 0xE028) [[likely]] {
 		return nullptr;

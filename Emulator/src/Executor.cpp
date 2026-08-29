@@ -417,13 +417,13 @@ ExecutionStatus Executor::ExecuteGe(ExecutionContext& ctx)
 
 ExecutionStatus Executor::ExecuteSlt(ExecutionContext& ctx)
 {
-	ctx.State.SetRegister(ctx.Instruction.a, static_cast<uint32_t>(ctx.State.GetRegister(ctx.Instruction.b) < ctx.State.GetRegister(ctx.Instruction.c)));
+	ctx.State.SetRegister(ctx.Instruction.a, static_cast<uint32_t>(static_cast<int32_t>(ctx.State.GetRegister(ctx.Instruction.b)) < static_cast<int32_t>(ctx.State.GetRegister(ctx.Instruction.c))));
 	return ExecutionStatus::Success;
 }
 
 ExecutionStatus Executor::ExecuteSge(ExecutionContext& ctx)
 {
-	ctx.State.SetRegister(ctx.Instruction.a, static_cast<uint32_t>(ctx.State.GetRegister(ctx.Instruction.b) >= ctx.State.GetRegister(ctx.Instruction.c)));
+	ctx.State.SetRegister(ctx.Instruction.a, static_cast<uint32_t>(static_cast<int32_t>(ctx.State.GetRegister(ctx.Instruction.b)) >= static_cast<int32_t>(ctx.State.GetRegister(ctx.Instruction.c))));
 	return ExecutionStatus::Success;
 }
 ExecutionStatus Executor::ExecuteSimCtrl(ExecutionContext& ctx)

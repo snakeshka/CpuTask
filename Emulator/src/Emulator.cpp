@@ -29,28 +29,30 @@ EmulatorResult Emulator::Run(const Cpu::Bytecode& bytecode,
 	Ram ram(config.Ram.Size, config.Ram.WarnUninit, config.Ram.ClearStack);
 	ram.SetTraceEnabled(config.Ram.TraceEnabled, config.Ram.TraceIntervals);
 
+	EventQueue eventQueue;
+
 	BusRouter bus(ram);
 	PicDevice pic(config.Trace.Pic);
 	TimerDevice timer(bus);
-	OutputDevice outputDev(bus);
+	OutputDevice outputDev(bus, eventQueue);
 
 	bus.RegisterDevice(&outputDev);
 	bus.RegisterDevice(&timer);
 	bus.RegisterDevice(&pic);
 
 	uint32_t tick = 1;
-	for (size_t i = 0; i < bytecode.size(); ++i) {
-		bus.WriteByte(static_cast<uint32_t>(i), bytecode[i], 0);
+	for (size_t i = 0; i < bytecode.size(); i += 4) {
+		const uint32_t word = static_cast<uint32_t>(bytecode[i]) |
+		                     (static_cast<uint32_t>(bytecode[i + 1]) << 8) |
+		                     (static_cast<uint32_t>(bytecode[i + 2]) << 16) |
+		                     (static_cast<uint32_t>(bytecode[i + 3]) << 24);
+		bus.WriteWord(static_cast<uint32_t>(i), word, 0);
 	}
+
 	CpuState state;
 	state.SetInstructionPointer(0);
 	Executor executor;
 	Tracer tracer(config.Trace.Disasm, config.Trace.Intervals, config.Trace.Interrupts);
-
-	EventQueue eventQueue;
-	eventQueue.Schedule(outputDev.GetEventPeriod(), [&outputDev](uint32_t currentTick) -> uint32_t {
-		return outputDev.OnEvent(currentTick);
-	});
 
 	bool isWaiting = false;
 
